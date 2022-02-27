@@ -37,6 +37,7 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * General implementation of an {@link AuthDataGenerator} for OAuth2.
@@ -104,14 +105,12 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     params.put("code", authCode);
 
     HttpContent content = new UrlEncodedContent(params);
-
     try {
-      String tokenResponse = OAuthUtils.makeRawPostRequest(
-          httpTransport, config.getTokenUrl(), content);
-
-      return config.getResponseClass(tokenResponse);
+      String tokenResponse = OAuthUtils.makeRawPostRequest(httpTransport, config.getTokenUrl(), content);
+      TokensAndUrlAuthData responseClass = config.getResponseClass(tokenResponse);
+      return responseClass;
     } catch (IOException e) {
-      throw new RuntimeException("Error getting token", e); // TODO
+      throw new RuntimeException("Error getting token", e);
     }
   }
 

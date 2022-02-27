@@ -45,4 +45,13 @@ public class NewMediaItemResult implements Serializable {
   public String getUploadToken() {
     return uploadToken;
   }
+
+  @Override
+  public String toString() {
+    return "NewMediaItemResult{" +
+            "uploadToken='" + uploadToken + '\'' +
+            ", status=" + status +
+            ", mediaItem=" + mediaItem +
+            '}';
+  }
 }

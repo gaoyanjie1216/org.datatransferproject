@@ -15,9 +15,9 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,15 +25,25 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.*;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.collect.Lists;
+import com.google.common.io.CharStreams;
 import com.google.rpc.Code;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
@@ -50,6 +60,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.hamcrest.CoreMatchers;
@@ -73,8 +84,12 @@ public class GooglePhotosImporterTest {
   private ImageStreamProvider imageStreamProvider;
   private Monitor monitor;
 
+  private String ACCESS_TOKEN
+          = "ya29.A0ARrdaM-k6L5GlqhMY6vkFqMlUkIHsKOBLX5Y3-1ZHjvpSHAm5b2BFNhlhrv0NvovVd6Re00alLNJw6scWdxZSXmMR68lNkyLiSzS3VSuYhFaUEcq3s0HuYzUBU9etAjjoptuYyjwo0ijO1ZcbmraVD-tkeWFog";
+
   @Before
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
+
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
     monitor = Mockito.mock(Monitor.class);
     executor = new InMemoryIdempotentImportExecutor(monitor);
@@ -101,67 +116,129 @@ public class GooglePhotosImporterTest {
   @Test
   public void importAlbum() throws Exception {
     // Set up
-    String albumName = "Album Name";
+    String albumName = "666";
     String albumDescription = "Album description";
-    PhotoAlbum albumModel = new PhotoAlbum(OLD_ALBUM_ID, albumName, albumDescription);
+    PhotoAlbum albumModel = new PhotoAlbum("222", albumName, albumDescription);
 
     GoogleAlbum responseAlbum = new GoogleAlbum();
-    responseAlbum.setId(NEW_ALBUM_ID);
-    Mockito.when(googlePhotosInterface.createAlbum(any(GoogleAlbum.class)))
-        .thenReturn(responseAlbum);
-
+    responseAlbum.setId("111");
     // Run test
-    googlePhotosImporter.importSingleAlbum(uuid, null, albumModel);
+    GooglePhotosImporter googlePhotosImporter = setting();
+    //TokensAndUrlAuthData authData = generateAuthData();
+    String accessToken = ACCESS_TOKEN;
+    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
+    String url = "https://accounts.google.com/o/oauth2/token";
+    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url);
+    String albumId = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
+    System.out.println("albumId: " + albumId);
 
-    // Check results
-    ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
-    Mockito.verify(googlePhotosInterface).createAlbum(albumArgumentCaptor.capture());
-    assertEquals(albumArgumentCaptor.getValue().getTitle(), albumName);
-    assertNull(albumArgumentCaptor.getValue().getId());
+    // test333的相册id
+    // AJ4dpAo28yC4gM26PdE04psigG8mSyohBQRL2Ee_BdnykfT0oAZu-jnJDy8unXH6YHSR93L-kvtF
+    // GoogleAlbum{id='AJ4dpApHhYqtnAg9DgwApe0PsBERXAB95bMH9fYzdkXnoxjO4pmnGR5n8EZkaMz9fboaiSwb134t', title='666'}
+  }
+
+  private GooglePhotosImporter setting() {
+    AppCredentials appCredentials = new AppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+
+    JsonFactory jsonFactory = new JacksonFactory();
+    HttpTransport httpTransport = new NetHttpTransport();
+    GoogleCredentialFactory credentialFactory =
+            new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
+    JobStore jobStore = new LocalJobStore();
+
+    GooglePhotosImporter googlePhotosImporter = new GooglePhotosImporter(
+            credentialFactory,
+            jobStore,
+            jsonFactory,
+            monitor, 1.0);
+    return googlePhotosImporter;
+  }
+
+  public TokensAndUrlAuthData generateAuthData() {
+    HttpTransport httpTransport = new NetHttpTransport();
+    Map<String, String> params = new LinkedHashMap<>();
+    String clientId = "757188424449-sleac6qmnlnm56v5fgnmclu6512gl0hc.apps.googleusercontent.com";
+    String clientSecret = "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";
+    String authCode = "4/0AX4XfWhJL-GXHA1_Xq4vk9oww__Md3--xbe7sCN49ItYky859PHDINlRe7tnAnQthZyvWw";
+    String callbackBaseUrl = "https://localhost:8080";
+    params.put("client_id", clientId);
+    params.put("client_secret", clientSecret);
+    params.put("grant_type", "authorization_code");
+    params.put("redirect_uri", callbackBaseUrl);
+    params.put("code", authCode);
+
+    HttpContent content = new UrlEncodedContent(params);
+    String tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+    try {
+      String tokenResponse = makeRawPostRequest(httpTransport, tokenUrl, content);
+      TokensAndUrlAuthData responseClass = getResponseClass(tokenResponse);
+      return responseClass;
+    } catch (IOException e) {
+      throw new RuntimeException("Error getting token", e);
+    }
+  }
+
+  public TokensAndUrlAuthData getResponseClass(String result) throws IOException {
+    OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
+    return new TokensAndUrlAuthData(
+            response.getAccessToken(),
+            response.getRefreshToken(),
+            "");
+  }
+
+  static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent)
+          throws IOException {
+    HttpRequestFactory factory = httpTransport.createRequestFactory();
+    HttpRequest postRequest = factory.buildPostRequest(new GenericUrl(url), httpContent);
+    HttpResponse response = postRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+              "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    }
+    return CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
   }
 
   @Test
   public void importTwoPhotos() throws Exception {
+    String albumId = "AJ4dpApHhYqtnAg9DgwApe0PsBERXAB95bMH9fYzdkXnoxjO4pmnGR5n8EZkaMz9fboaiSwb134t";
+    String url1 = "https://i.niupic.com/images/2022/02/27/9Vpd.png";
+    String url2 = "https://i.niupic.com/images/2022/02/27/9Vp3.png";
+    String url3 = "https://i.niupic.com/images/2022/02/27/9Vpe.png";
     PhotoModel photoModel1 =
-        new PhotoModel(
-            PHOTO_TITLE,
-            IMG_URI,
-            PHOTO_DESCRIPTION,
-            JPEG_MEDIA_TYPE,
-            "oldPhotoID1",
-            OLD_ALBUM_ID,
-            false);
+            new PhotoModel(PHOTO_TITLE, url1, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE, "oldPhotoID1", albumId, false);
     PhotoModel photoModel2 =
-        new PhotoModel(
-            PHOTO_TITLE,
-            IMG_URI,
-            PHOTO_DESCRIPTION,
-            JPEG_MEDIA_TYPE,
-            "oldPhotoID2",
-            OLD_ALBUM_ID,
-            false);
+            new PhotoModel(PHOTO_TITLE, url2, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE, "oldPhotoID2", albumId, false);
+    PhotoModel photoModel3 =
+            new PhotoModel(PHOTO_TITLE, url3, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE, "oldPhotoID3", albumId, false);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
+    String accessToken = ACCESS_TOKEN;
+    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
+    String url111 = "https://accounts.google.com/o/oauth2/token";
+    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url111);
+
+    GooglePhotosImporter googlePhotosImporter = setting();
+    //Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
             new NewMediaItemResult[] {
               buildMediaItemResult("token1", Code.OK_VALUE),
               buildMediaItemResult("token2", Code.OK_VALUE)
             });
-    Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
-        .thenReturn(batchMediaItemResponse);
+    /*Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
+        .thenReturn(batchMediaItemResponse);*/
 
     long length =
         googlePhotosImporter.importPhotoBatch(
-            UUID.randomUUID(),
-            Mockito.mock(TokensAndUrlAuthData.class),
-            Lists.newArrayList(photoModel1, photoModel2),
-            executor,
-            NEW_ALBUM_ID);
+            UUID.randomUUID(), authData,
+            Lists.newArrayList(photoModel1, photoModel2, photoModel3),
+            executor, albumId);
+    System.out.println("length: " + length);
+
     // Two photos of 32L each imported
-    assertEquals(64L, length);
+   /* assertEquals(64L, length);
     assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel1)));
-    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel2)));
+    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel2)));*/
   }
 
   private NewMediaItemResult buildMediaItemResult(String uploadToken, int code) {

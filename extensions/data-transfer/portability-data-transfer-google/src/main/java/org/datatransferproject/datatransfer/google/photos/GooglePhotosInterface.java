@@ -75,12 +75,12 @@ public class GooglePhotosInterface {
   private static final String FILTERS_KEY = "filters";
   private static final String INCLUDE_ARCHIVED_KEY = "includeArchivedMedia";
   private static final Map<String, String> PHOTO_UPLOAD_PARAMS =
-      ImmutableMap.of(
-          "Content-type", "application/octet-stream",
-          "X-Goog-Upload-Protocol", "raw");
+          ImmutableMap.of(
+                  "Content-type", "application/octet-stream",
+                  "X-Goog-Upload-Protocol", "raw");
 
   private final ObjectMapper objectMapper =
-      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+          new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private final HttpTransport httpTransport = new NetHttpTransport();
   private Credential credential;
   private final JsonFactory jsonFactory;
@@ -89,11 +89,11 @@ public class GooglePhotosInterface {
   private final RateLimiter writeRateLimiter;
 
   GooglePhotosInterface(
-      GoogleCredentialFactory credentialFactory,
-      Credential credential,
-      JsonFactory jsonFactory,
-      Monitor monitor,
-      double writesPerSecond) {
+          GoogleCredentialFactory credentialFactory,
+          Credential credential,
+          JsonFactory jsonFactory,
+          Monitor monitor,
+          double writesPerSecond) {
     this.credential = credential;
     this.jsonFactory = jsonFactory;
     this.monitor = monitor;
@@ -102,7 +102,7 @@ public class GooglePhotosInterface {
   }
 
   AlbumListResponse listAlbums(Optional<String> pageToken)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -119,11 +119,11 @@ public class GooglePhotosInterface {
   GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "mediaItems/" + mediaId, Optional.of(params), GoogleMediaItem
-        .class);
+            .class);
   }
 
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
     if (albumId.isPresent()) {
@@ -136,16 +136,24 @@ public class GooglePhotosInterface {
     }
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(
-        BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
+            BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
 
+  /**
+   * 执行谷歌相册远程post调用
+   * @param googleAlbum
+   * @return
+   */
   GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
           throws IOException, InvalidTokenException, PermissionDeniedException {
+    // 谷歌相册类转换成map
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
-
-    return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
+    // 发送post请求向谷歌相册 https://photoslibrary.googleapis.com/v1/albums
+    GoogleAlbum googleAlbum1 = makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
+    System.out.println("create googleAlbum: " + googleAlbum1);
+    return googleAlbum1;
   }
 
   String uploadPhotoContent(InputStream inputStream)
@@ -160,75 +168,98 @@ public class GooglePhotosInterface {
       return "EMPTY_PHOTO";
     }
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
-
-    return makePostRequest(
-        BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
+    // 上传数据流到谷歌云存储 https://photoslibrary.googleapis.com/v1/uploads﻿
+    String s = makePostRequest(
+            BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
+    System.out.println("upload result: " + s);
+    return s;
   }
 
+  /**
+   * 批量创建图片
+   * @param newMediaItemUpload
+   * @return
+   * @throws IOException
+   * @throws InvalidTokenException
+   * @throws PermissionDeniedException
+   */
   BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
+    System.out.println("params map: " + map);
+    // 请求url：https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate
+    BatchMediaItemResponse batchMediaItemResponse = makePostRequest(
+            BASE_URL + "mediaItems:batchCreate",
+            Optional.empty(),
+            httpContent,
+            BatchMediaItemResponse.class);
 
-    return makePostRequest(
-        BASE_URL + "mediaItems:batchCreate",
-        Optional.empty(),
-        httpContent,
-        BatchMediaItemResponse.class);
+    System.out.println("batchMediaItemResponse: " + batchMediaItemResponse);
+    return batchMediaItemResponse;
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
-        requestFactory.buildGetRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)));
-
+            requestFactory.buildGetRequest(
+                    new GenericUrl(url + "?" + generateParamsString(parameters)));
+    // 封装返回结果
     HttpResponse response;
     try {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
       response =
-          handleHttpResponseException(
-              () ->
-                  requestFactory.buildGetRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters))),
-              e);
+              handleHttpResponseException(
+                      () ->
+                              requestFactory.buildGetRequest(
+                                      new GenericUrl(url + "?" + generateParamsString(parameters))),
+                      e);
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+            CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return objectMapper.readValue(result, clazz);
   }
 
-  <T> T makePostRequest(
-      String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+  /**
+   * Google Photo发起post请求
+   * @param url
+   * @param parameters
+   * @param httpContent
+   * @param clazz
+   * @param <T>
+   */
+  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     // Wait for write permit before making request
-    writeRateLimiter.acquire();
-
+    // 限流
+    //writeRateLimiter.acquire();
+    // 创建httpClient
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest postRequest =
-        requestFactory.buildPostRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
-    postRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
+    String encoderUrl = url + "?" + generateParamsString(parameters);
+    // System.out.println("encoderUrl: " + encoderUrl);
+    // https://photoslibrary.googleapis.com/v1/albums?access_token=my_access_token
+    // encoderUrl = "https://photoslibrary.googleapis.com/v1/albums?key=AIzaSyDOuNTbXbr3Z1bQ0ybAVzRA8Wpx7MiG1fs";
+    HttpRequest postRequest = requestFactory.buildPostRequest(new GenericUrl(encoderUrl), httpContent);
+    // 2 minutes read timeout
+    postRequest.setReadTimeout(2 * 60000);
     HttpResponse response;
 
     try {
+      // 执行post请求等待返回结果
       response = postRequest.execute();
+
     } catch (HttpResponseException e) {
-      response =
-          handleHttpResponseException(
-              () ->
-                  requestFactory.buildPostRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
-              e);
+      // 失败重新执行发送请求
+      response = handleHttpResponseException(() -> requestFactory.buildPostRequest(
+              new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent), e);
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    String result = CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {
@@ -237,8 +268,8 @@ public class GooglePhotosInterface {
   }
 
   private HttpResponse handleHttpResponseException(
-      SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+          SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     // if the response is "unauthorized", refresh the token and try the request again
     final int statusCode = e.getStatusCode();
 
@@ -257,17 +288,17 @@ public class GooglePhotosInterface {
     // "Google Photos is disabled for the user" is potential error for photos.
     if (statusCode == 403 &&
             (e.getContent().contains("The caller does not have permission") ||
-             e.getContent().contains("Google Photos is disabled for the user"))) {
+                    e.getContent().contains("Google Photos is disabled for the user"))) {
       throw new PermissionDeniedException("User permission to google photos was denied", e);
     } else {
       // something else is wrong, bubble up the error
       throw new IOException(
-          "Bad status code: "
-              + e.getStatusCode()
-              + " Error: '"
-              + e.getStatusMessage()
-              + "' Content: "
-              + e.getContent());
+              "Bad status code: "
+                      + e.getStatusCode()
+                      + " Error: '"
+                      + e.getStatusMessage()
+                      + "' Content: "
+                      + e.getContent());
     }
   }
 
@@ -296,8 +327,9 @@ public class GooglePhotosInterface {
   private HashMap<String, Object> createJsonMap(Object object) throws IOException {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
-    TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {};
+    // JacksonFactory期望接收一个Map，而不是一个json注释的POJO，所以我们必须转换
+    // 在创建HttpContent之前，NewMediaItemUpload到一个Map
+    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 

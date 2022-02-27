@@ -29,6 +29,7 @@ import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,8 +62,10 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-public class GooglePhotosImporter
-    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+/**
+ * Google导入照片数据的容器
+ */
+public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -75,32 +78,32 @@ public class GooglePhotosImporter
   private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
 
   public GooglePhotosImporter(
-      GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
-      JsonFactory jsonFactory,
-      Monitor monitor,
-      double writesPerSecond) {
+          GoogleCredentialFactory credentialFactory,
+          JobStore jobStore,
+          JsonFactory jsonFactory,
+          Monitor monitor,
+          double writesPerSecond) {
     this(
-        credentialFactory,
-        jobStore,
-        jsonFactory,
-        new HashMap<>(),
-        null,
-        new ImageStreamProvider(),
-        monitor,
-        writesPerSecond);
+            credentialFactory,
+            jobStore,
+            jsonFactory,
+            new HashMap<>(),
+            null,
+            new ImageStreamProvider(),
+            monitor,
+            writesPerSecond);
   }
 
   @VisibleForTesting
   GooglePhotosImporter(
-      GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
-      JsonFactory jsonFactory,
-      Map<UUID, GooglePhotosInterface> photosInterfacesMap,
-      GooglePhotosInterface photosInterface,
-      ImageStreamProvider imageStreamProvider,
-      Monitor monitor,
-      double writesPerSecond) {
+          GoogleCredentialFactory credentialFactory,
+          JobStore jobStore,
+          JsonFactory jsonFactory,
+          Map<UUID, GooglePhotosInterface> photosInterfacesMap,
+          GooglePhotosInterface photosInterface,
+          ImageStreamProvider imageStreamProvider,
+          Monitor monitor,
+          double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
@@ -111,13 +114,21 @@ public class GooglePhotosImporter
     this.writesPerSecond = writesPerSecond;
   }
 
+  /**
+   * 谷歌导入相册和图片
+   * @param jobId the ID for the job
+   * @param idempotentImportExecutor
+   * @param authData authentication information
+   * @param data the data
+   * @return
+   * @throws Exception
+   */
   @Override
   public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData,
-      PhotosContainerResource data)
-      throws Exception {
+          UUID jobId,
+          IdempotentImportExecutor idempotentImportExecutor,
+          TokensAndUrlAuthData authData,
+          PhotosContainerResource data) throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -127,7 +138,7 @@ public class GooglePhotosImporter
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
+                album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
       }
     }
 
@@ -137,9 +148,16 @@ public class GooglePhotosImporter
     return result.copyWithBytes(bytes);
   }
 
+  /**
+   * 只是导入相册
+   * @param jobId
+   * @param authData
+   * @param inputAlbum
+   * @return
+   */
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     String title = Strings.nullToEmpty(inputAlbum.getName());
@@ -150,25 +168,36 @@ public class GooglePhotosImporter
       title = title.substring(0, 497) + "...";
     }
     googleAlbum.setTitle(title);
+    googleAlbum.setId("1");
 
-    GoogleAlbum responseAlbum =
-        getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
+    // getOrCreatePhotosInterface 获取或创建谷歌图片类
+    // createAlbum 执行post请求
+    GooglePhotosInterface orCreatePhotosInterface = getOrCreatePhotosInterface(jobId, authData);
+    GoogleAlbum responseAlbum = orCreatePhotosInterface.createAlbum(googleAlbum);
     return responseAlbum.getId();
   }
 
+  /**
+   * 导入图片
+   * @param photos
+   * @param executor
+   * @param jobId
+   * @param authData
+   * @return
+   * @throws Exception
+   */
   long importPhotos(
-      Collection<PhotoModel> photos,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData)
-      throws Exception {
+          Collection<PhotoModel> photos,
+          IdempotentImportExecutor executor,
+          UUID jobId,
+          TokensAndUrlAuthData authData) throws Exception {
     long bytes = 0L;
     // Uploads photos
     if (photos != null && photos.size() > 0) {
       Map<String, List<PhotoModel>> photosByAlbum =
-          photos.stream()
-              .filter(photo -> !executor.isKeyCached(getIdempotentId(photo)))
-              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
+              photos.stream()
+                      .filter(photo -> !executor.isKeyCached(getIdempotentId(photo)))
+                      .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
 
       for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
         String originalAlbumId = albumEntry.getKey();
@@ -176,21 +205,25 @@ public class GooglePhotosImporter
         if (Strings.isNullOrEmpty(originalAlbumId)) {
           // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
           // upload a NewMediaItem without a corresponding album id.
+          // 这是ok的，因为NewMediaItemUpload将忽略所有的空值，这是可能的
+          // 上传一个没有相应相册id的NewMediaItem
           googleAlbumId = null;
         } else {
           // Note this will throw if creating the album failed, which is what we want
           // because that will also mark this photo as being failed.
+          //注意，如果创建相册失败，这是我们想要的，因为这也会标记这张照片为失败
           googleAlbumId = executor.getCachedValue(originalAlbumId);
         }
 
         // We partition into groups of 49 as 50 is the maximum number of items that can be created
         // in one call. (We use 49 to avoid potential off by one errors)
+        //我们划分为49组，因为50是可以创建的最大条目数一次调用。(我们使用49来避免因一个错误而导致电位下降)
         // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
         UnmodifiableIterator<List<PhotoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
+                Iterators.partition(albumEntry.getValue().iterator(), 49);
         while (batches.hasNext()) {
-          long batchBytes =
-              importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
+          // 批量导入数据
+          long batchBytes = importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
           bytes += batchBytes;
         }
       }
@@ -198,13 +231,22 @@ public class GooglePhotosImporter
     return bytes;
   }
 
+  /**
+   * 批量导入照片
+   * @param jobId 迁移任务id
+   * @param authData 身份权限认证
+   * @param photos
+   * @param executor 执行器
+   * @param albumId 对应相册id
+   * @return
+   * @throws Exception
+   */
   long importPhotoBatch(
-      UUID jobId,
-      TokensAndUrlAuthData authData,
-      List<PhotoModel> photos,
-      IdempotentImportExecutor executor,
-      String albumId)
-      throws Exception {
+          UUID jobId,
+          TokensAndUrlAuthData authData,
+          List<PhotoModel> photos,
+          IdempotentImportExecutor executor,
+          String albumId) throws Exception {
     final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
     final HashMap<String, PhotoModel> uploadTokenToDataId = new HashMap<>();
     final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
@@ -212,13 +254,20 @@ public class GooglePhotosImporter
     // TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
     //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
     //  this however, seems to require knowledge of the total file size.
+    // 断点续传https://developers.google.com/photos/library/guides/resumable-uploads
+    // 断点续传将允许上传不适合内存的更大的媒体。要做这似乎需要知道总文件大小
     for (PhotoModel photo : photos) {
       try {
         Pair<InputStream, Long> inputStreamBytesPair =
-            getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
+                // 根据url获取相应的InputStream流信息
+                getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
         try (InputStream s = inputStreamBytesPair.getFirst()) {
-          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          // TODO: 2022/2/16 获取谷歌图片类, 调用上传流post远程调用 uploadPhotoContent
+          GooglePhotosInterface googlePhotosInterface = getOrCreatePhotosInterface(jobId, authData);
+          // 上传图片流到云服务上
+          String uploadToken = googlePhotosInterface.uploadPhotoContent(s);
+          // final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
           uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
@@ -230,61 +279,67 @@ public class GooglePhotosImporter
           }
         } catch (Exception e) {
           // Swallow the exception caused by Remove data so that existing flows continue
-          monitor.info(
-              () ->
-                  format(
-                      "%s: Exception swallowed in removeData call for localPath %s",
-                      jobId, photo.getFetchableUrl()),
-              e);
+          monitor.info(() -> format(
+                  "%s: Exception swallowed in removeData call for localPath %s",
+                          jobId, photo.getFetchableUrl()), e);
         }
       } catch (IOException e) {
         executor.executeAndSwallowIOExceptions(
-            getIdempotentId(photo),
-            photo.getTitle(),
-            () -> {
-              throw e;
-            });
+                // 获取相册id + dataId
+                getIdempotentId(photo),
+                photo.getTitle(),
+                () -> {
+                  System.out.println("error: " + e.getMessage());
+                  throw e;
+                });
       }
     }
 
     if (mediaItems.isEmpty()) {
       // Either we were not passed in any videos or we failed upload on all of them.
+      System.out.println("mediaItems is Empty");
       return 0L;
     }
 
     long totalBytes = 0L;
     NewMediaItemUpload uploadItem = new NewMediaItemUpload(albumId, mediaItems);
     try {
-      BatchMediaItemResponse photoCreationResponse =
-          getOrCreatePhotosInterface(jobId, authData).createPhotos(uploadItem);
+      // 获取或创建谷歌图片类GooglePhotosInterface
+      // 发送请求创建 createPhotos
+      GooglePhotosInterface googlePhotosInterface = getOrCreatePhotosInterface(jobId, authData);
+      // todo 创建图片
+      BatchMediaItemResponse photoCreationResponse = googlePhotosInterface.createPhotos(uploadItem);
+      System.out.println("createPhotos result: " + photoCreationResponse);
       Preconditions.checkNotNull(photoCreationResponse);
+
       NewMediaItemResult[] mediaItemResults = photoCreationResponse.getResults();
       Preconditions.checkNotNull(mediaItemResults);
       for (NewMediaItemResult mediaItem : mediaItemResults) {
         PhotoModel photo = uploadTokenToDataId.get(mediaItem.getUploadToken());
         totalBytes +=
-            processMediaResult(
-                mediaItem,
-                getIdempotentId(photo),
-                executor,
-                photo.getTitle(),
-                uploadTokenToLength.get(mediaItem.getUploadToken()));
+                processMediaResult(
+                        mediaItem,
+                        getIdempotentId(photo),
+                        executor,
+                        photo.getTitle(),
+                        uploadTokenToLength.get(mediaItem.getUploadToken()));
         uploadTokenToDataId.remove(mediaItem.getUploadToken());
       }
 
       if (!uploadTokenToDataId.isEmpty()) {
         for (PhotoModel photo : uploadTokenToDataId.values()) {
+          // 添加数据
           executor.executeAndSwallowIOExceptions(
-              getIdempotentId(photo),
-              photo.getTitle(),
-              () -> {
-                throw new IOException("Photo was missing from results list.");
-              });
+                  getIdempotentId(photo),
+                  photo.getTitle(),
+                  () -> {
+                    throw new IOException("Photo was missing from results list.");
+                  });
         }
       }
     } catch (IOException e) {
       if (e.getMessage() != null
-          && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+              && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
         throw new DestinationMemoryFullException("Google destination storage full", e);
       } else {
         throw e;
@@ -295,45 +350,68 @@ public class GooglePhotosImporter
   }
 
   private long processMediaResult(
-      NewMediaItemResult mediaItem,
-      String idempotentId,
-      IdempotentImportExecutor executor,
-      String title,
-      long bytes)
-      throws Exception {
+          NewMediaItemResult mediaItem,
+          String idempotentId,
+          IdempotentImportExecutor executor,
+          String title,
+          long bytes)
+          throws Exception {
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
       executor.executeAndSwallowIOExceptions(
-          idempotentId, title, () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
+              idempotentId, title, () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
       return bytes;
     } else {
       executor.executeAndSwallowIOExceptions(
-          idempotentId,
-          title,
-          () -> {
-            throw new IOException(
-                String.format(
-                    "Media item could not be created. Code: %d Message: %s",
-                    status.getCode(), status.getMessage()));
-          });
+              idempotentId,
+              title,
+              () -> {
+                throw new IOException(
+                        String.format(
+                                "Media item could not be created. Code: %d Message: %s",
+                                status.getCode(), status.getMessage()));
+              });
       return 0;
     }
   }
 
+  /**
+   * 根据url获取相应的InputStream流信息
+   * @param jobId
+   * @param fetchableUrl
+   * @param inTempStore
+   * @return
+   */
   private Pair<InputStream, Long> getInputStreamForUrl(
-      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+          UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
+      // 临时存储
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
       return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
     }
-
-    HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-    return Pair.of(
-        conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
+    // TODO: 2022/2/16 根据url获取相应的InputStream流信息
+    // HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
+    //return Pair.of(conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
+    // String inputUrl = fetchableUrl;
+    URL url = new URL(fetchableUrl);
+    if("https".equalsIgnoreCase(url.getProtocol())) {
+      try {
+        SslUtils.ignoreSsl();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
+    connection.setConnectTimeout(10 * 1000);
+    connection.connect();
+    return Pair.of(connection.getInputStream(), connection.getContentLengthLong() != -1 ? connection.getContentLengthLong() : 0);
   }
 
   String getIdempotentId(PhotoModel photo) {
-    return photo.getAlbumId() + "-" + photo.getDataId();
+    String albumIdAndDataId = photo.getAlbumId() + "-" + photo.getDataId();
+    System.out.println("albumIdAndDataId: " + albumIdAndDataId);
+    return albumIdAndDataId;
   }
 
   private String cleanDescription(String origDescription) {
@@ -347,8 +425,14 @@ public class GooglePhotosImporter
     return description;
   }
 
-  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
-      UUID jobId, TokensAndUrlAuthData authData) {
+  /**
+   * 获取或创建谷歌图片类
+   * @param jobId
+   * @param authData
+   * @return
+   */
+  public synchronized GooglePhotosInterface getOrCreatePhotosInterface(
+          UUID jobId, TokensAndUrlAuthData authData) {
 
     if (photosInterface != null) {
       return photosInterface;
@@ -357,17 +441,22 @@ public class GooglePhotosImporter
     if (photosInterfacesMap.containsKey(jobId)) {
       return photosInterfacesMap.get(jobId);
     }
-
+    // 新建谷歌图片类，需要拿到获取认证的数据authData
     GooglePhotosInterface newInterface = makePhotosInterface(authData);
     photosInterfacesMap.put(jobId, newInterface);
 
     return newInterface;
   }
 
+  /**
+   * 创建谷歌PhotosInterface
+   * @param authData
+   * @return
+   */
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(
-        credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
+            credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
   }
 
   private synchronized BaseMultilingualDictionary getOrCreateStringDictionary(UUID jobId) {

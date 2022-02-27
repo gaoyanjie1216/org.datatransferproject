@@ -64,6 +64,7 @@ public interface OAuth2Config {
 
   /**
    * Returns the class that can deserialize the OAuth response.
+   * 发送请求获取的 access_token
    */
   default TokensAndUrlAuthData getResponseClass(String result) throws IOException {
     OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
