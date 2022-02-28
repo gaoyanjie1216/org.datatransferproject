@@ -118,7 +118,9 @@ public class GoogleCalendarImporter implements
         calendarModel);
     com.google.api.services.calendar.model.Calendar calendarResult =
         getOrCreateCalendarInterface(authData).calendars().insert(toInsert).execute();
-    return calendarResult.getId();
+    String id = calendarResult.getId();
+    System.out.println("calendar: " + id);
+    return id;
   }
 
   @VisibleForTesting

@@ -31,6 +31,11 @@ public class GetTransferJobAction implements Action<GetTransferJob, TransferJob>
     return GetTransferJob.class;
   }
 
+  /**
+   * 获取传输任务的处理器
+   * @param transferRequest
+   * @return
+   */
   @Override
   public TransferJob handle(GetTransferJob transferRequest) {
     String id = transferRequest.getId();

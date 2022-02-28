@@ -107,13 +107,21 @@ public class GoogleVideosImporter
     this.dataStore = dataStore;
   }
 
+  /**
+   * 视频导入谷歌
+   * @param jobId the ID for the job
+   * @param executor
+   * @param authData authentication information
+   * @param data the data
+   * @return
+   * @throws Exception
+   */
   @Override
   public ImportResult importItem(
       UUID jobId,
       IdempotentImportExecutor executor,
       TokensAndUrlAuthData authData,
-      VideosContainerResource data)
-      throws Exception {
+      VideosContainerResource data) throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -152,6 +160,7 @@ public class GoogleVideosImporter
       final UnmodifiableIterator<List<VideoModel>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
+        // 开始批量导入
         long batchBytes = importVideoBatch(batches.next(), client, executor);
         bytes += batchBytes;
       }
@@ -271,9 +280,9 @@ public class GoogleVideosImporter
 
     final File tmp;
     try (InputStream inputStream =
+            // 根据URL获取 HttpURLConnection，再进一步拿到流
         this.videoStreamProvider
-            .getConnection(inputVideo.getContentUrl().toString())
-            .getInputStream()) {
+                .getConnection(inputVideo.getContentUrl().toString()).getInputStream()) {
       tmp = dataStore.getTempFileFromInputStream(inputStream, inputVideo.getName(), ".mp4");
     }
     try {

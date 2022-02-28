@@ -151,6 +151,7 @@ public class GoogleContactsExporterTest {
     connectionsList = Collections.singletonList(PERSON);
     listConnectionsResponse = new ListConnectionsResponse();
     listConnectionsResponse.setConnections(connectionsList);
+    // 联系人信息导出类
     PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
     GetPeopleResponse batchResponse =
         new GetPeopleResponse().setResponses(Collections.singletonList(personResponse));

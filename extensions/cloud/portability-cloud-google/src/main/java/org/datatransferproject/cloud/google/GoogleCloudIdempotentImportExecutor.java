@@ -81,6 +81,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
       T result = callable.call();
       monitor.debug(
           () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
+      // 添加到 Datastore
       addResult(idempotentId, result);
       return result;
     } catch (Exception e) {
@@ -98,6 +99,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private <T extends Serializable> void addResult(String idempotentId, T result)
       throws IOException {
+    // private Map<String, Serializable> knownValues;
     knownValues.put(idempotentId, result);
 
     try {

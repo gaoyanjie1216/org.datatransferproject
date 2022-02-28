@@ -24,7 +24,9 @@ import java.util.ServiceLoader;
 
 import static org.datatransferproject.launcher.monitor.ConsoleMonitor.Level.DEBUG;
 
-/** Helper for loading monitor extensions. */
+/** Helper for loading monitor extensions.
+ * 加载监视器扩展的助手
+ */
 public class MonitorLoader {
   private static Monitor monitor;
   public static synchronized Monitor loadMonitor() {

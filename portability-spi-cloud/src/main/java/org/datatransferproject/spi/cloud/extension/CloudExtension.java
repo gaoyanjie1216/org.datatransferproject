@@ -19,7 +19,10 @@ import org.datatransferproject.api.launcher.AbstractExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
-/** Cloud extensions implement this interface to be loaded in either a api or transfer worker process. */
+/**
+ * Cloud extensions implement this interface to be loaded in either a api or transfer worker process.
+ * 云扩展实现了这个接口，可以在api中加载，也可以在传输工作进程中加载
+ */
 public interface CloudExtension extends AbstractExtension {
 
   /**
@@ -31,8 +34,8 @@ public interface CloudExtension extends AbstractExtension {
 
   /**
    * Returns the extension app credential store instance.
-   *
    * @return the instance
+   * 返回扩展app 的资格或证明用于存储的
    */
   AppCredentialStore getAppCredentialStore();
 }

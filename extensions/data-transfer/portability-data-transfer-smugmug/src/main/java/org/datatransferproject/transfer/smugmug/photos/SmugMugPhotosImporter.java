@@ -132,6 +132,7 @@ public class SmugMugPhotosImporter
     if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl()).getStream();
     } else {
+      // 根据url获取相应的InputStream流文件
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
 

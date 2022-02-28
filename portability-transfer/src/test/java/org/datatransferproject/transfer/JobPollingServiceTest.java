@@ -126,6 +126,7 @@ public class JobPollingServiceTest {
                     .setSessionSecretKey("fooBar")
                     .build())
             .build();
+    // 创建迁移任务job
     store.createJob(TEST_ID, job);
 
     // Verify initial authorization state

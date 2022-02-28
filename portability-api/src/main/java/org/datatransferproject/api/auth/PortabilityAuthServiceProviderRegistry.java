@@ -36,8 +36,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   private final ImmutableSet<String> supportedExportTypes;
 
   @Inject
-  public PortabilityAuthServiceProviderRegistry(
-      Map<String, AuthServiceExtension> serviceProviderMap) {
+  public PortabilityAuthServiceProviderRegistry(Map<String, AuthServiceExtension> serviceProviderMap) {
 
     ImmutableMap.Builder<String, AuthServiceExtension> serviceProviderBuilder =
         ImmutableMap.builder();
@@ -52,8 +51,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
             Preconditions.checkArgument(
                 exportTypes.contains(type),
                 "TransferDataType [%s] is available for import but not export in [%s] AuthServiceExtension",
-                type,
-                service);
+                type, service);
             supportedImportTypesBuilder.add(type);
           }
           supportedExportTypesBuilder.addAll(exportTypes);
@@ -117,8 +115,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
     return authServiceProviderMap
         .values()
         .stream()
-        .filter(
-            sp -> sp.getExportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
+        .filter(sp -> sp.getExportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
         .map(AuthServiceExtension::getServiceId)
         .collect(Collectors.toSet());
   }
@@ -126,6 +123,10 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   /** Returns the set of data types that support both import and export. */
   @Override
   public Set<String> getTransferDataTypes() {
-    return Sets.intersection(supportedExportTypes, supportedImportTypes);
+    // Sets.intersection 获取交集
+    Sets.SetView<String> intersection = Sets.intersection(supportedExportTypes, supportedImportTypes);
+    System.out.println("supportedExportTypes: " + supportedExportTypes);
+    System.out.println("supportedImportTypes: " + supportedImportTypes);
+    return intersection;
   }
 }

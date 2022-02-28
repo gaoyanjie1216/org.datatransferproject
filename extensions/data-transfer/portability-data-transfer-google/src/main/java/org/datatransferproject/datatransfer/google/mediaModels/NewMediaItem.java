@@ -27,6 +27,12 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
  * Note that this does not contain the content of the media item (photo or video)
  * itself, just the description and a {@code SimpleMediaItem} containing the upload token
  * corresponding to the previously-uploaded content.
+ *
+ * 该类包含通过谷歌创建新媒体项时上传的所有信息
+ * 照片的API。表示在{@link PhotoModel }之间的中间步骤
+ * 和一个{@link GoogleMediaItem}(它是响应{@link NewMediaItemUpload}创建的)。
+ * 注意，这并不包含媒体项目的内容(照片或视频)
+ * 本身，只是描述和一个{@code SimpleMediaItem}包含上传令牌对应于之前上传的内容。
  */
 public class NewMediaItem {
   @JsonProperty("description")

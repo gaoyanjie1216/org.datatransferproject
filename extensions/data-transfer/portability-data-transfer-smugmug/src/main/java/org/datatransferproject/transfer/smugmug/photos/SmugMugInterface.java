@@ -158,6 +158,11 @@ public class SmugMugInterface {
         .getResponse();
   }
 
+  /**
+   * 发起请求认证，根据url获取InputStream
+   * @param urlStr
+   * @return
+   */
   public InputStream getImageAsStream(String urlStr) {
     OAuthRequest request = new OAuthRequest(Verb.GET, urlStr);
     oAuthService.signRequest(accessToken, request);

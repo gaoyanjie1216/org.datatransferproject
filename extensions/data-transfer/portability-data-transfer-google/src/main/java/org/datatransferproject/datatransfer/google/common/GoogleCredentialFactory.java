@@ -75,6 +75,7 @@ public class GoogleCredentialFactory {
         .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
         .addRefreshListener(
             new CredentialRefreshListener() {
+              // 刷新token，应该是为了延长传输认证时间
               @Override
               public void onTokenResponse(Credential credential, TokenResponse tokenResponse)
                   throws IOException {

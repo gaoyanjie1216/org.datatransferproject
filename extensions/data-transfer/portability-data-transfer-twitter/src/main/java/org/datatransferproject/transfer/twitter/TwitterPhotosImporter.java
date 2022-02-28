@@ -57,6 +57,7 @@ final class TwitterPhotosImporter
     for (PhotoModel image : data.getPhotos()) {
       try {
         StatusUpdate update = new StatusUpdate(image.getDescription());
+        // 根据url获取相应的InputStream流文件
         InputStreamContent content =
             new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
         update.media(image.getTitle(), content.getInputStream());

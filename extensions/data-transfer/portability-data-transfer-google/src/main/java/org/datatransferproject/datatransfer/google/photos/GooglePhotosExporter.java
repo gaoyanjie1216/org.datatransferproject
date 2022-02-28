@@ -95,6 +95,16 @@ public class GooglePhotosExporter
     this.monitor = monitor;
   }
 
+  /**
+   * 提供者数据迁出，这里是谷歌图片迁出
+   * @param jobId the job id
+   * @param authData authentication data for the operation
+   * @param exportInformation info about what data to export see {@link ExportInformation} for more
+   * @return
+   * @throws IOException
+   * @throws InvalidTokenException
+   * @throws PermissionDeniedException
+   */
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
@@ -147,6 +157,12 @@ public class GooglePhotosExporter
     }
   }
 
+  /**
+   * 导出照片数据容器
+   * @param container
+   * @param authData
+   * @return
+   */
   private ExportResult<PhotosContainerResource> exportPhotosContainer(
       PhotosContainerResource container, TokensAndUrlAuthData authData)
       throws IOException, InvalidTokenException, PermissionDeniedException {
@@ -155,6 +171,7 @@ public class GooglePhotosExporter
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
+      // 获取Google相册数据 getAlbum
       GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
       albumBuilder.add(new PhotoAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
@@ -162,6 +179,7 @@ public class GooglePhotosExporter
     }
 
     for (PhotoModel photo : container.getPhotos()) {
+      // 获取Google相册photo的数据 getMediaItem
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
       photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));

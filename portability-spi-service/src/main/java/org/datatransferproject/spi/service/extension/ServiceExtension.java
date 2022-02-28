@@ -25,5 +25,8 @@ import org.datatransferproject.api.launcher.AbstractExtension;
  * An extension that provides core runtime services used by other extensions.
  *
  * <p>Service extensions are guaranteed to be loaded prior to other extension types.
+ *
+ * 提供其他扩展使用的核心运行时服务的扩展。
+ * 服务扩展保证在其他扩展类型之前加载。
  */
 public interface ServiceExtension extends AbstractExtension {}

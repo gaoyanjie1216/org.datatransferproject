@@ -25,7 +25,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/** Returns the available data types supported by the system, e.g. contacts, photos, etc. */
+/** Returns the available data types supported by the system, e.g. contacts, photos, etc.
+ * 返回系统支持的可用的数据类型，包括联系方式、图片等
+ */
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
 @Path("/datatypes")

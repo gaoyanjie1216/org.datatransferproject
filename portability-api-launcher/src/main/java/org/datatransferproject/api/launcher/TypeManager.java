@@ -37,6 +37,7 @@ public interface TypeManager {
   /**
    * Registers a model type. Extensions that introduce new model subtypes must registered them here
    * so they can be databound properly.
+   * 注册模型类型。引入新模型子类型的扩展必须在这里注册它们这样它们就能被正确地绑定
    *
    * @param types the type to register.
    */

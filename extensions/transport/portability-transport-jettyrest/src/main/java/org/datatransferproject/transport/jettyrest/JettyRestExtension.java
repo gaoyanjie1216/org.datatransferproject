@@ -27,6 +27,7 @@ import java.security.KeyStore;
 
 /**
  * Bootstraps the Jetty REST extension.
+ * Jetty和Jersey 进行rest调用，用于http传输的
  *
  * <p>Binds {@link org.datatransferproject.api.action.Action}s to REST over HTTP using Jetty and
  * Jersey.
@@ -41,6 +42,7 @@ public class JettyRestExtension implements ServiceExtension {
     JettyMonitor.setDelegate(monitor);
     KeyStore keyStore = context.getService(KeyStore.class);
     boolean useHttps = context.getSetting("useHttps", true);
+    // 初始化transport，
     transport = new JettyTransport(keyStore, useHttps, monitor);
     binder = new JerseyTransportBinder(transport);
     context.registerService(TransportBinder.class, binder);
@@ -48,6 +50,7 @@ public class JettyRestExtension implements ServiceExtension {
 
   @Override
   public void start() {
+    // 启动加载数据传输的controller
     binder.start();
     transport.start();
   }

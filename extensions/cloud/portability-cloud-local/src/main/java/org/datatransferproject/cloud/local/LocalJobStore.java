@@ -66,6 +66,8 @@ public final class LocalJobStore extends JobStoreWithValidator {
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
    *     problem inserting the job.
+   *
+   *    本地内存存储，创建任务
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -75,6 +77,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
     JOB_MAP.put(jobId, job.toMap());
+    System.out.println("JOB_MAP: " + JOB_MAP);
   }
 
   /**

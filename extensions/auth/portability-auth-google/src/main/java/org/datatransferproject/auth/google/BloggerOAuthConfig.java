@@ -24,6 +24,9 @@ import java.util.Set;
 /**
  * Class that supplies Google Blogger-specific OAuth2 info, this is needed so because multiple
  * Google services implement the vertical SOCIAL-POSTS
+ *
+ * 类提供谷歌特定于blogger的OAuth2信息，这是需要的，因为多个
+ * 谷歌服务实现垂直的social-post
  */
 public class BloggerOAuthConfig extends GoogleOAuthConfig {
 

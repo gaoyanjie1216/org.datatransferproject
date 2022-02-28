@@ -31,9 +31,10 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
-/*
+/**
  * GoogleTransferExtension allows for importers and exporters of data types
  * to be retrieved.
+ * GoogleTransferExtension 允许数据类型的导入和导出检索
  */
 public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
@@ -50,6 +51,11 @@ public class GoogleTransferExtension implements TransferExtension {
     return SERVICE_ID;
   }
 
+  /**
+   * 根据transferDataType获取导出类型的具体的类
+   * @param transferDataType
+   * @return
+   */
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
@@ -57,6 +63,11 @@ public class GoogleTransferExtension implements TransferExtension {
     return exporterMap.get(transferDataType);
   }
 
+  /**
+   * 根据transferDataType获取导入类型的具体的类
+   * @param transferDataType
+   * @return
+   */
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
@@ -64,12 +75,20 @@ public class GoogleTransferExtension implements TransferExtension {
     return importerMap.get(transferDataType);
   }
 
+  /**
+   * 初始化导入和导出的扩展类信息
+   * @param context the extension context.
+   */
   @Override
   public void initialize(ExtensionContext context) {
     // Note: initialize could be called twice in an account migration scenario where we import and
     // export to the same service provider. So just return rather than throwing if called multiple
     // times.
-    if (initialized) return;
+    //注意:initialize可以在帐户迁移场景中调用两次，其中我们导入和
+    //导出到相同的服务提供商。如果调用multiple，就返回而不是抛出异常。
+    if (initialized) {
+      return;
+    }
 
     JobStore jobStore = context.getService(JobStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
@@ -77,6 +96,7 @@ public class GoogleTransferExtension implements TransferExtension {
 
     AppCredentials appCredentials;
     try {
+      // 获取app认证信息 key和secret
       appCredentials =
           context
               .getService(AppCredentialStore.class)
@@ -95,6 +115,7 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
+    // 初始化所有导入数据的类信息
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
     importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
@@ -112,6 +133,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("VIDEOS", new GoogleVideosImporter(appCredentials, jobStore, monitor));
     importerMap = importerBuilder.build();
 
+    // 初始化所有导出信息的类信息
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put("BLOBS", new DriveExporter(credentialFactory, jobStore, monitor));
     exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
@@ -119,8 +141,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
-    exporterBuilder.put(
-        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
+    exporterBuilder.put("PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
     exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory, jsonFactory));
 
     exporterMap = exporterBuilder.build();

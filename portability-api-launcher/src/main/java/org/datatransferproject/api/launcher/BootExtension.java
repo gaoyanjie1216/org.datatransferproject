@@ -15,8 +15,13 @@
  */
 package org.datatransferproject.api.launcher;
 
-/** Implementations provide services required to boot a runtime system. */
+/** Implementations provide services required to boot a runtime system.
+ * 实现提供了启动运行时系统所需的服务
+ */
 public interface BootExtension extends SystemExtension {
-  /** Initializes the extension. Implementations prepare core bootstrap services. */
+
+  /** Initializes the extension. Implementations prepare core bootstrap services.
+   * 初始化扩展。实现准备核心引导服务。
+   */
   void initialize();
 }

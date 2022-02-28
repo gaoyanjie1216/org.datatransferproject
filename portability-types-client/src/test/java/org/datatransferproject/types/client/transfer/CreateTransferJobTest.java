@@ -38,7 +38,11 @@ public class CreateTransferJobTest {
                 null,
                 "cleartext"));
 
+    System.out.println("serialized: " + serialized);
+
     CreateTransferJob deserialized = objectMapper.readValue(serialized, CreateTransferJob.class);
+
+    System.out.println("testSource: " + deserialized.getExportService());
 
     Assert.assertEquals("testSource", deserialized.getExportService());
     Assert.assertEquals("testDestination", deserialized.getImportService());

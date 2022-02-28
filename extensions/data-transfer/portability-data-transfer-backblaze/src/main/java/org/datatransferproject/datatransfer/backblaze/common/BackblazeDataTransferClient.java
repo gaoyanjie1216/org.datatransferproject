@@ -54,6 +54,12 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
+/**
+ * Backblaze 和我们其他现有目的地之间的唯一区别是身份验证。DTP 中的大多数适配器使用 OAuth 进行身份验证，
+ * 用户在启动传输之前登录到每个服务。Backblaze 不同，因为它使用基于 API 密钥的身份验证。
+ * 这意味着我们必须在我们的工具中扩展 UI 以允许用户输入他们的应用程序密钥详细信息并将其作为
+ * TokenSecretAuthData 连接到导入适配器以安全地传输作业。
+ */
 public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;

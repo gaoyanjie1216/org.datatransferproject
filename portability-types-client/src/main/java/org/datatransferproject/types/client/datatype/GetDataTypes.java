@@ -15,5 +15,8 @@
  */
 package org.datatransferproject.types.client.datatype;
 
-/** A request to list data types available for export and import. */
+/**
+ *  A request to list data types available for export and import.
+ *  列出可用于导出和导入的数据类型的请求
+ */
 public class GetDataTypes {}

@@ -25,6 +25,11 @@ import java.time.Duration;
  *
  * <p>Cloud extensions should implement this interface to records stats to their preferred stats
  * platform.
+ *
+ * 该接口用于记录关于DTP作业的度量。
+ * 注意这个类只能被DTP框架代码使用，传输扩展应该使用:
+ * {@link MetricRecorder}管道调用到recordGeneric*方法。
+ * 云扩展应该实现这个接口记录统计到他们的首选统计平台。
  */
 public interface DtpInternalMetricRecorder {
   // Metrics related to DTP internals

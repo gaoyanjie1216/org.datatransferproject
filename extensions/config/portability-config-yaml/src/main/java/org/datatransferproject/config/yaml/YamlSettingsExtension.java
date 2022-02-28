@@ -70,6 +70,10 @@ public class YamlSettingsExtension implements SettingsExtension {
     parseRetryLibrary(getRetryLibraryStream());
   }
 
+  /**
+   * 将生成的配置的文件的流放入settings一个map中
+   * @param in
+   */
   @VisibleForTesting
   void parseSimple(InputStream in) {
     if (in == null) {
@@ -96,6 +100,10 @@ public class YamlSettingsExtension implements SettingsExtension {
     }
   }
 
+  /**
+   * 获取配置文件的名称，生成流
+   * @return
+   */
   private InputStream getSimpleInputStream() {
     ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
         .add(COMMON_SETTINGS_PATH)
@@ -111,6 +119,7 @@ public class YamlSettingsExtension implements SettingsExtension {
 
   private InputStream getRetryLibraryStream() {
     // TODO: read from extensions-specific libraries here
+    // 读取 config/retry/default.yaml
     return ConfigUtils.getCombinedInputStream(ImmutableList.of(RETRY_LIBRARY_PATH));
   }
 }

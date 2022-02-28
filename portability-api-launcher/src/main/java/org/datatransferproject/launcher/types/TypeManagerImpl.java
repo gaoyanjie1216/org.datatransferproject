@@ -19,14 +19,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.datatransferproject.api.launcher.TypeManager;
 
-/** Jackson-based type manager that supports polymorphic type handling. */
+/** Jackson-based type manager that supports polymorphic type handling.
+ * 支持多态类型处理的基于jackson的类型管理器
+ */
 public class TypeManagerImpl implements TypeManager {
   private final ObjectMapper objectMapper;
 
   public TypeManagerImpl() {
     objectMapper = new ObjectMapper();
-    objectMapper.registerModule(
-        new JavaTimeModule()); // configure ISO 8601 time de/serialization support
+    // configure ISO 8601 time de/serialization support
+    objectMapper.registerModule(new JavaTimeModule());
   }
 
   public ObjectMapper getMapper() {

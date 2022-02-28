@@ -21,7 +21,10 @@ import org.datatransferproject.types.transfer.auth.AuthData;
 
 import java.util.UUID;
 
-/** Imports data into a destination service. */
+/**
+ * Imports data into a destination service.
+ * 导入数据到目标服务上
+ */
 public interface Importer<A extends AuthData, T extends DataModel> {
   /**
    * Imports data.

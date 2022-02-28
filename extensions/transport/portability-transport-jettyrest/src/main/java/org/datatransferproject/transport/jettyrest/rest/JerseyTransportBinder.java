@@ -33,6 +33,7 @@ import java.util.Set;
  *
  * <p>Actions are bound by creating JAX-RS resources and registering them with the Jersey
  * application.
+ * 通过创建JAX-RS资源并将其注册到Jersey应用程序来绑定操作
  */
 public class JerseyTransportBinder implements TransportBinder {
   private final JettyTransport jettyTransport;
@@ -49,15 +50,18 @@ public class JerseyTransportBinder implements TransportBinder {
     actions.put(action.getRequestType(), action);
   }
 
+  /**
+   * 启动加载controller
+   */
   @SuppressWarnings("unchecked")
   public void start() {
 
     try {
-
       Set<Object> controllers = new HashSet<>();
       controllers.add(new DataTypesController(actions.get(GetDataTypes.class)));
       controllers.add(new TransferServicesController(actions.get(GetTransferServices.class)));
       controllers.add(
+          // 加载所有的数据传输的 controller
           new TransferController(
               actions.get(CreateTransferJob.class),
               actions.get(GenerateServiceAuthData.class),

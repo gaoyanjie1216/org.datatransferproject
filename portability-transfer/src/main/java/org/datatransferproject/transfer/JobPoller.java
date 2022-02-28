@@ -24,6 +24,9 @@ import com.google.inject.Inject;
  *
  * <p>Lightweight wrapper around an {@code AbstractScheduledService} so as to not expose its
  * implementation details.
+ *
+ * 轮询一个{@code PortabilityJob}，以便此转移工作 进行处理。
+ * 围绕{@code AbstractScheduledService}的轻量级包装器，这样就不会暴露它的实现细节
  */
 final class JobPoller {
   private final JobPollingService jobPollingService;

@@ -235,6 +235,7 @@ public class GoogleContactsExporter
               .setResourceNames(resourceNames)
               .setPersonFields(PERSON_FIELDS)
               .execute();
+      // 谷歌联系人信息导出
       List<PersonResponse> personResponseList = batchResponse.getResponses();
 
       // Convert Persons to VCards

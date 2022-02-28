@@ -37,7 +37,7 @@ public class GetReservedWorkerAction implements Action<GetReservedWorker, Reserv
   public ReservedWorker handle(GetReservedWorker workerRequest) {
     String id = workerRequest.getId();
     UUID jobId = decodeJobId(id);
-
+    // 获取已经保留的传输任务，可移植性的job
     PortabilityJob job = jobStore.findJob(jobId);
     Preconditions.checkNotNull(
         job, "Couldn't lookup worker for job " + id + " because the job doesn't exist");

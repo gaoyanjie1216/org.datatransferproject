@@ -42,6 +42,10 @@ import org.datatransferproject.spi.transfer.types.FailureReasons;
  * A service that polls storage for a job to process in two steps: <br> (1) find an unassigned job
  * for this transfer worker <br> (2) wait until the job is ready to process (i.e. creds are
  * available)
+ * 一种服务，它在存储中轮询一个作业，以便分两个步骤处理:
+ * (1)找到一个未分配的作业，对于这个transfer worker
+ * (2)等待直到作业准备好处理(即creds是可用)
+ * 相当于一个任务队列的作用
  */
 class JobPollingService extends AbstractScheduledService {
 
@@ -116,6 +120,7 @@ class JobPollingService extends AbstractScheduledService {
   /**
    * Polls for an unassigned job, and once found, initializes the global singleton job metadata
    * object for this running instance of the transfer worker.
+   * 轮询未分配的作业，一旦找到，就初始化全局单例作业元数据对象，传输工作器的这个运行实例
    */
   private void pollForUnassignedJob() {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
@@ -134,6 +139,9 @@ class JobPollingService extends AbstractScheduledService {
     // Note: tryToClaimJob may fail if another transfer worker beat us to it. That's ok -- this
     // transfer
     // worker will keep polling until it can claim a job.
+    // 备份私钥(keyPair.getPrivate())，以防这个传输worker在拷贝过程中死亡，所以我们不需要让用户从头开始。有些选项用于管理此键
+    //在我们的托管平台的密钥管理系统中进行配对，而不是在这里生成，或到在客户端加密并存储私钥。
+    //注意:tryToClaimJob可能会失败，如果另一个转移worker超过我们。没关系——这个转移worker将继续投票，直到他们可以申请工作。
     boolean claimed = tryToClaimJob(jobId, keyPair);
     if (claimed) {
       monitor.debug(
@@ -148,6 +156,9 @@ class JobPollingService extends AbstractScheduledService {
   /**
    * Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
    * Returns true if the claim was successful; otherwise it returns false.
+   *
+   * 声明{@link PortabilityJob} {@code jobId}并使用存储中的公钥更新它。
+   * 如果请求成功返回true;否则返回false
    */
   private boolean tryToClaimJob(UUID jobId, WorkerKeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.

@@ -22,7 +22,10 @@ import java.net.URL;
 
 public class ImageStreamProvider {
 
-  /** Gets an HttpURLConnection to an image, given its URL. */
+  /**
+   * Gets an HttpURLConnection to an image, given its URL.
+   * 获取一个给定URL的图像的 HttpURLConnection
+   */
   public HttpURLConnection getConnection(String urlStr) throws IOException {
     URL url = new URL(urlStr);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();

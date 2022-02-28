@@ -62,6 +62,9 @@ public class JettyTransport {
     monitor.info(() -> "Creating JettyTransport. useHttps=" + useHttps);
   }
 
+  /**
+   * 启动传输相关的http
+   */
   public void start() {
     try {
     if (useHttps) {

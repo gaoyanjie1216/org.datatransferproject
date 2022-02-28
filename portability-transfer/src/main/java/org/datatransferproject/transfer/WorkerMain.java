@@ -56,11 +56,16 @@ public class WorkerMain {
 
   private Worker worker;
 
+  /**
+   * 迁移任务的入口执行类
+   * @param args
+   */
   public static void main(String[] args) {
     Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
     WorkerMain workerMain = new WorkerMain();
     workerMain.initialize();
+    // 重要启动程序组件在这里启动
     workerMain.poll();
 
     System.exit(0);
@@ -81,11 +86,13 @@ public class WorkerMain {
 
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
+            // 扩展类初始化
         .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
 
     // TODO: verify that this is the cloud extension that is specified in the configuration
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
+
     monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
 
     JobStore jobStore = cloudExtension.getJobStore();
@@ -114,6 +121,7 @@ public class WorkerMain {
 
     Injector injector = null;
     try {
+      // 创建注射器模型
       injector =
           Guice.createInjector(
               new WorkerModule(
@@ -134,6 +142,9 @@ public class WorkerMain {
     JobMetadata.reset();
   }
 
+  /**
+   * 获取任务执行
+   */
   public void poll() {
     worker.doWork();
   }

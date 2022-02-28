@@ -38,6 +38,7 @@ public class YamlSettingsExtensionTest {
 
   @Test
   public void parse() {
+    // 读取yml文件，加载到settingsExtension类中
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1);
     InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
     YamlSettingsExtension settingsExtension = new YamlSettingsExtension();

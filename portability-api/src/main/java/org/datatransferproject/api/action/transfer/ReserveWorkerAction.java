@@ -37,6 +37,7 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
     String id = reserveWorker.getId();
     Preconditions.checkNotNull(id, "transfer job ID required for ReserveWorkerAction");
     UUID jobId = decodeJobId(id);
+    // 更新任务为可用的状态
     updateStateToCredsAvailable(jobId);
     // Instead of returning an empty string, return a ReservedWorker response with an empty public
     // key.

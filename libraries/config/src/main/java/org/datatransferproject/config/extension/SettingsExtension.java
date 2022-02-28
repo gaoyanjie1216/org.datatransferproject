@@ -24,6 +24,10 @@ public interface SettingsExtension extends BootExtension {
    *
    * @param setting the extension setting name
    * @param defaultValue the default value. Null may be passed.
+   *
+   * 返回扩展名设置的配置值，如果没有找到则返回默认值。
+   * @param setting 扩展名
+   * @param defaultValue 默认值。可以传递Null值。
    */
   <T> T getSetting(String setting, T defaultValue);
 }

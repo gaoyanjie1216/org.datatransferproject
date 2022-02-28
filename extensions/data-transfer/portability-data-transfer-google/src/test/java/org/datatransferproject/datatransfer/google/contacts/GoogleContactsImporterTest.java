@@ -79,6 +79,7 @@ public class GoogleContactsImporterTest {
       vCard.setFormattedName("First " + structuredName.getFamily());
       vCardList.add(vCard);
     }
+    // 联系方式人员导出卡片信息生成model
     String vCardString = GoogleContactsExporter.makeVCardString(vCardList);
     ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardString);
 

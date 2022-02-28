@@ -19,10 +19,13 @@ import org.datatransferproject.api.launcher.AbstractExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 
-/** Transfer extensions implement this contract to be loaded in a transfer worker process. */
+/** Transfer extensions implement this contract to be loaded in a transfer worker process.
+ * 传输扩展实现此合同以加载到传输工作进程中
+ * */
 public interface TransferExtension extends AbstractExtension {
 
-  /** The key associated with this extension's service. */
+  /** The key associated with this extension's service.
+   * 与此扩展服务关联的密钥 */
   String getServiceId();
 
   /** Returns initialized extension exporter. */

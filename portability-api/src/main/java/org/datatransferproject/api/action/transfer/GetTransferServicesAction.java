@@ -40,7 +40,9 @@ public final class GetTransferServicesAction
     return GetTransferServices.class;
   }
 
-  /** Lists the services available for export and import for a given data type. */
+  /** Lists the services available for export and import for a given data type.
+   * 获取用于导入和导出的服务列表
+   */
   @Override
   public TransferServices handle(GetTransferServices request) {
     String transferDataType = request.getTransferDataType();

@@ -64,7 +64,10 @@ public class ApiMain {
   private final Monitor monitor;
   private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
-  /** Starts the api server, currently the reference implementation. */
+  /**
+   * Starts the api server, currently the reference implementation.
+   * 启动api服务器，当前是参考实现
+   */
   public static void main(String[] args) {
 
     Monitor monitor = loadMonitor();
@@ -76,6 +79,7 @@ public class ApiMain {
 
     ApiMain apiMain = new ApiMain(monitor);
     apiMain.initializeHttp();
+    // 启动 apiMain
     apiMain.start();
   }
 
@@ -87,6 +91,12 @@ public class ApiMain {
     initializeHttps(null, null, null);
   }
 
+  /**
+   * 初始化https
+   * @param trustManagerFactory
+   * @param keyManagerFactory
+   * @param keyStore
+   */
   public void initializeHttps(
       TrustManagerFactory trustManagerFactory,
       KeyManagerFactory keyManagerFactory,
@@ -114,12 +124,13 @@ public class ApiMain {
     if (keyStore != null) {
       extensionContext.registerService(KeyStore.class, keyStore);
     }
-
+    // 注册实现类
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
+    // 在authServiceExtensions和加载类型之间的服务类型管理器需要首先被初始化
     serviceExtensions = new ArrayList<>();
     ServiceLoader.load(ServiceExtension.class).iterator().forEachRemaining(serviceExtensions::add);
 
@@ -129,11 +140,11 @@ public class ApiMain {
     cloudExtension.initialize(extensionContext);
 
     // Needed for GoogleAuthServiceExtension
+    // 需要谷歌授权服务的扩展器，包括传输、存储、授权信息等
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
     extensionContext.registerService(TemporaryPerJobDataStore.class, cloudExtension.getJobStore());
-    extensionContext.registerService(
-        AppCredentialStore.class, cloudExtension.getAppCredentialStore());
+    extensionContext.registerService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -141,11 +152,12 @@ public class ApiMain {
         .iterator()
         .forEachRemaining(
             (authServiceExtension) -> {
+              // 初始化身份认证、授权相关
               authServiceExtension.initialize(extensionContext);
               authServiceExtensions.add(authServiceExtension);
             });
 
-    // TODO: make configurable
+    // TODO: make configurable 密钥key相关
     SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator(monitor);
     TokenManager tokenManager;
 
@@ -153,6 +165,8 @@ public class ApiMain {
       // TODO: we store the JWT Token with the application credentials, but dont need to have a key
       // consider using a blobstore type of thing or allowing the AppCredentialStore to return a
       // cred that doesn't contain a key.
+      // TODO:我们存储JWT令牌与应用程序凭据，但不需要有一个键
+      // 考虑使用blobstore类型的东西或允许AppCredentialStore返回一个不包含密钥的信用。
       tokenManager =
           new JWTTokenManager(
               cloudExtension
@@ -190,6 +204,7 @@ public class ApiMain {
 
     extensionContext.registerService(Injector.class, injector);
 
+    // 绑定所有的controller执行器
     bindActions(injector, extensionContext);
   }
 
@@ -209,6 +224,7 @@ public class ApiMain {
     TypeLiteral<Set<Action>> literal = setOf(Action.class);
     Key<Set<Action>> key = Key.get(literal);
     Set<Action> actions = injector.getInstance(key);
+    // 加载所有的controller执行器
     actions.forEach(binder::bind);
   }
 

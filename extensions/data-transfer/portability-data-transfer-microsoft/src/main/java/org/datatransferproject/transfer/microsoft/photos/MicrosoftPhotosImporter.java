@@ -196,6 +196,7 @@ public class MicrosoftPhotosImporter
     if (photo.isInTempStore()) {
       inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
     } else if (photo.getFetchableUrl() != null) {
+      // 把url转换成流文件
       inputStream = new BufferedInputStream(new URL(photo.getFetchableUrl()).openStream());
     } else {
       throw new IllegalStateException("Don't know how to get the inputStream for " + photo);

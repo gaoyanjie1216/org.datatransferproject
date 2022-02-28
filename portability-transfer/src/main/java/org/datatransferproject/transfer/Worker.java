@@ -34,8 +34,10 @@ final class Worker {
   }
 
   void doWork() {
+    // poll 获得job
     jobPoller.pollJob();
     jobCancelWatchingService.startAsync();
+    // TODO: 2022/2/18 任务处理器执行相应的处理任务， 很多重要逻辑都在这个方法
     jobProcessor.processJob();
   }
 }

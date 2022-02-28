@@ -46,6 +46,11 @@ import static java.lang.String.format;
  * <p>App keys are stored raw in Google Cloud Storage. App secrets are encrypted using Cloud KMS by
  * a project admin (using encrypt_and_upload_secrets.sh). This class returns {@link AppCredentials}
  * created by looking up keys and secrets in GCS, and decrypting the secrets with KMS.
+ *
+ * 应用凭证存储使用谷歌云平台。
+ * 应用程序键原始存储在谷歌云存储。使用 Cloud KMS 加密应用程序的 secrets
+ * 项目管理员(使用 encrypt_and_upload_secrets.sh)。这个类返回{@link AppCredentials}
+ * 通过在GCS中查找密钥和秘密，并使用KMS解密这些秘密来创建。
  */
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
@@ -67,6 +72,11 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
    *
    * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
    * compromised, we can update them without restarting our servers.
+   *
+   * 将keys and secrets 存储在缓存中，这样我们可以在读取时减少云存储/ KMS的负载
+   * 密钥和读取/解密秘密启动几次。
+   * 设置缓存周期性地重新加载密钥/秘密，以便在 keys/secrets 存在的情况下
+   * 妥协后，我们可以在不重启服务器的情况下更新它们。
    */
   private final LoadingCache<String, String> keys;
 
@@ -88,6 +98,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
             .getService();
     // Google Cloud Platform requires bucket names be unique across projects, so we include project
     // ID in the bucket name.
+    // 谷歌云平台要求桶名在项目中是唯一的，所以我们包含了project 桶名中的ID
     this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
     this.keys =
         CacheBuilder.newBuilder()
@@ -111,6 +122,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
                 });
   }
 
+  @Override
   public AppCredentials getAppCredentials(String keyName, String secretName) throws IOException {
     String key;
     String secret;
@@ -146,11 +158,18 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     return new String(rawKeyBytes).trim();
   }
 
+  /**
+   * 获取 secret
+   * @param secretName
+   * @return
+   * @throws IOException
+   */
   private String lookupSecret(String secretName) throws IOException {
     String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
     monitor.debug(()->format("Getting app secret for %s (blob %s)", secretName, secretLocation));
     byte[] encryptedSecret = getRawBytes(secretLocation);
     checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
+    // 解密
     String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();
     checkState(!Strings.isNullOrEmpty(secret), "Couldn't decrypt: " + secretName);
     return secret;

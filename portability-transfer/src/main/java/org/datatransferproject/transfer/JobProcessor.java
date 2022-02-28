@@ -48,6 +48,10 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
  * key<br>
  * (2)Run the copy job
+ *
+ * 分两个步骤处理作业:
+ * (1)解密存储的凭证，这些凭证已经被这个传输工作者的公共加密key
+ * (2)执行拷贝任务
  */
 final class JobProcessor {
   private final JobStore store;
@@ -87,7 +91,7 @@ final class JobProcessor {
     try {
       markJobStarted(jobId);
       hooks.jobStarted(jobId);
-
+      // 根据jobId获取一个可迁移的job任务
       PortabilityJob job = store.findJob(jobId);
       JobAuthorization jobAuthorization = job.jobAuthorization();
 
@@ -110,8 +114,10 @@ final class JobProcessor {
 
       String encrypted = jobAuthorization.encryptedAuthData();
       byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
+
       AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
+      // 获取导入授权信息认证
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
       String exportInfoStr = job.exportInformation();
@@ -120,12 +126,14 @@ final class JobProcessor {
         exportInfo = Optional.of(objectMapper.readValue(exportInfoStr, ExportInformation.class));
       }
 
-      // Copy the data
+      // Copy the data A DTP job started
       dtpInternalMetricRecorder.startedJob(
           JobMetadata.getDataType(),
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
+
+      // TODO: 2022/2/18 In-memory Copier interface, 拷贝数据总入口
       errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       final int numErrors = errors.size();
       monitor.debug(

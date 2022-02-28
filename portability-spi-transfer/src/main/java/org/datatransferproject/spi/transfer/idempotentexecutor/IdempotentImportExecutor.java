@@ -48,6 +48,16 @@ public interface IdempotentImportExecutor {
    *     can't be imported
    * @param callable the callable to execute
    * @return the result of executing the callable.
+   *
+   * 执行一个可调用对象，对于给定的idempotentId，该可调用对象将只执行一次，随后执行
+   * 如果成功，调用将返回与第一次调用相同的结果。
+   * 如果提供的可调用对象被记录并被忽略且为空，则抛出IO异常返回。所有其他例外都被通过
+   * 这对于叶子级导入非常有用，在叶子级导入中，如果只有一个项目，导入器应该继续执行不能导入。
+   * 任何错误(后面不成功的)都将报告为失败的条目。
+   * @param idempotentId 一个唯一的ID，以防止数据被复制
+   * @param itemName 一个用户可见/可理解的字符串，如果项目显示给用户不能导入
+   * @param callable 可调用对象
+   * @return 返回调用对象的执行结果。
    */
   @Nullable
   <T extends Serializable> T executeAndSwallowIOExceptions(

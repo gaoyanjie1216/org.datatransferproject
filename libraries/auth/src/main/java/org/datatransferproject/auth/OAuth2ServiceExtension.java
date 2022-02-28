@@ -37,6 +37,8 @@ import static java.lang.String.format;
 /**
  * General implementation of an {@link AuthServiceExtension} for OAuth2. Largely exists to provide
  * the appropriate {@link OAuth2DataGenerator} upon request.
+ *
+ * OAuth2的{@link AuthServiceExtension}的通用实现。主要是为了提供适当的{@link OAuth2DataGenerator}
  */
 public class OAuth2ServiceExtension implements AuthServiceExtension {
 
@@ -117,9 +119,7 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
         mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
 
     if (!generators.containsKey(transferType)) {
-      generators.put(
-          transferType,
-          new OAuth2DataGenerator(oAuth2Config, appCredentials, httpTransport, transferType, mode));
+      generators.put(transferType, new OAuth2DataGenerator(oAuth2Config, appCredentials, httpTransport, transferType, mode));
     }
 
     return generators.get(transferType);

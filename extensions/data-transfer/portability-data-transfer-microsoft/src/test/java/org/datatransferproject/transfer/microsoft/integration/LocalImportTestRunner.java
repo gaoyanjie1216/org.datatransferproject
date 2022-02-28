@@ -44,6 +44,7 @@ public class LocalImportTestRunner {
 
     ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
     FakeIdempotentImportExecutor executor = new FakeIdempotentImportExecutor();
+    // 导入数据
     ImportResult result = contacts.importItem(UUID.randomUUID(), executor, token, wrapper);
   }
 

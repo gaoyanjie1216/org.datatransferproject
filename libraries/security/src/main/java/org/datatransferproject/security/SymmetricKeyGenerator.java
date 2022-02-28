@@ -17,7 +17,9 @@ package org.datatransferproject.security;
 
 import javax.crypto.SecretKey;
 
-/** Creates and encodes keys for symmetric encryption. */
+/** Creates and encodes keys for symmetric encryption.
+ * 创建和编码对称加密的密钥
+ */
 public interface SymmetricKeyGenerator {
 
   /** Generates a {@link SecretKey} */

@@ -20,11 +20,15 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.ServiceLoader;
 
-/** Helper for loading the settings extension in a runtime. */
+/**
+ * Helper for loading the settings extension in a runtime.
+ * 在运行时中加载设置扩展的助手
+ */
 public class SettingsExtensionLoader {
 
   public static SettingsExtension getSettingsExtension() {
     ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
+    // 读取配置文件类 SettingsExtension
     ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
     ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(

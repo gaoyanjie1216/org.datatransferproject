@@ -19,8 +19,10 @@ package org.datatransferproject.api.launcher;
 public interface AbstractExtension extends SystemExtension{
   /**
    * Initializes the extension. Implementations prepare provided services.
-   *
    * @param context the extension context.
+   *
+   * 初始化扩展 实现准备所提供的服务。
+   * @param context 扩展上下文。
    */
   void initialize(ExtensionContext context);
 

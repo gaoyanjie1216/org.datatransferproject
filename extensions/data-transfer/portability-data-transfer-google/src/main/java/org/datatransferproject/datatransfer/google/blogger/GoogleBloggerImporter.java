@@ -133,6 +133,7 @@ public class GoogleBloggerImporter
       // Store any attached images in Drive in a new folder.
       Drive driveInterface = getOrCreateDriveService(authData);
       String folderId =
+              // 执行导入逻辑
           idempotentExecutor.executeOrThrowException(
               "MainAlbum", "Photo Album", () -> createAlbumFolder(driveInterface));
       for (SocialActivityAttachment image : imageAttachments) {

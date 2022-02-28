@@ -33,6 +33,10 @@ public class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
     this.monitor = monitor;
   }
 
+  /**
+   * 基于AES生成加密的secret
+   * @return
+   */
   @Override
   public SecretKey generate() {
     try {

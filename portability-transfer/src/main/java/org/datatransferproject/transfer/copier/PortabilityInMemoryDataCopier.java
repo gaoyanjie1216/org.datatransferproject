@@ -69,7 +69,9 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
     COPY_ITERATION_COUNTER.set(0);
   }
 
-  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
+  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
+   * 数据导出和导入的方法
+   * */
   @Override
   public Collection<ErrorDetail> copy(
       AuthData exportAuthData,
@@ -86,6 +88,10 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
    * the provided {@code exportInfo}. Imports the data using the provided {@code importer}. If there
    * is more data to required to be exported, recursively copies using the specific {@link
    * ExportInformation} to continue the process.
+   *
+   * 从指定的{@code 出口商}(可选)开始传输数据
+   * *提供的{@code exportInfo}，使用提供的{@code importer}导入数据。如果有
+   * *是更多的数据需要导出，递归地复制使用特定的{@link ExportInformation}继续进程。
    *
    * @param exportAuthData The auth data for the export
    * @param importAuthData The auth data for the import
@@ -106,6 +112,7 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
     // processed.
 
     ExportResult<?> exportResult =
+            // TODO: 2022/2/16 具体拷贝数据的地方
         copyIteration(
             jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, copyIteration);
 

@@ -26,7 +26,9 @@ import java.nio.channels.Channels;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 
-/** Class for temporarily storing user data for transfer */
+/** Class for temporarily storing user data for transfer
+ *  临时文件存储
+ * */
 public class GoogleTempFileStore {
   // TODO: extract a temp file store interface
   private final Bucket bucket;

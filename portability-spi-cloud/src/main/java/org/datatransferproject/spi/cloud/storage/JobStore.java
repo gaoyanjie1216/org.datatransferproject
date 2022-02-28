@@ -17,6 +17,9 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  *
  * <p>This class is intended to be implemented by extensions that support storage in various
  * back-end services.
+ *
+ * {@link PortabilityJob}的商店
+ * 该类旨在由支持各种存储的扩展来实现后端服务。
  */
 public interface JobStore extends TemporaryPerJobDataStore {
   /**
@@ -26,6 +29,10 @@ public interface JobStore extends TemporaryPerJobDataStore {
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
    *     problem inserting the job.
+   *
+   * 在商店中插入一个以{@code jobId}为键值的新{@link PortabilityJob}
+   * 要更新一个现有的{@link PortabilityJob}，使用{@link #update}
+   * @throws IOException 如果一个job已经存在，或者有一个不同的job ID插入作业时出现问题
    */
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
@@ -37,12 +44,19 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    *     updating it
    * @throws IllegalStateException if fails to successfully claim the job.
+   *
+   * 由一个转移工人调用来声明匹配{@code jobId}的作业，并更新到
+   * {@code job}设置新状态和认证公钥。这应该是原子的，不允许多个worker申请同一份工作。
+   * @throws IOException 如果一个job在{@code jobId}中不存在或者存在问题更新它
+   * @throws IllegalStateException 如果申请工作失败。
+   *
    */
   void claimJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
    * Update the jobs auth state to {@code JobAuthorization.State.CREDS_AVAILABLE} in the store. This
    * indicates to the pool of workers that this job is available for processing.
+   * 更新身份认证状态为CREDS_AVAILABLE，表示当前任务job是可用的
    */
   void updateJobAuthStateToCredsAvailable(UUID jobId) throws IOException;
 

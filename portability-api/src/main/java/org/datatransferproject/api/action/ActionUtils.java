@@ -25,11 +25,21 @@ import java.util.UUID;
 /** Helper functions for validating action related data. */
 public final class ActionUtils {
 
+  /**
+   * 加密jobId
+   * @param jobId
+   * @return
+   */
   public static String encodeJobId(UUID jobId) {
     Preconditions.checkNotNull(jobId);
     return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
   }
 
+  /**
+   * 解密jobId
+   * @param encodedJobId
+   * @return
+   */
   public static UUID decodeJobId(String encodedJobId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
     return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),

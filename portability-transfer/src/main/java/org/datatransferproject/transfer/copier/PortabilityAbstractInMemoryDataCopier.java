@@ -87,6 +87,17 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException;
 
+  /**
+   * copy数据然后提供者导出数据
+   * @param jobId
+   * @param exportAuthData
+   * @param importAuthData 接收者导入数据的认证
+   * @param exportInformation
+   * @param jobIdPrefix
+   * @param copyIteration
+   * @return
+   * @throws CopyException
+   */
   protected ExportResult<?> copyIteration(
       UUID jobId,
       AuthData exportAuthData,
@@ -105,6 +116,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     CallableExporter callableExporter =
             new CallableExporter(
                     exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
+    // 提供者导出数据，然后接收者导入数据
     RetryingCallable<ExportResult> retryingExporter =
             new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor, JobMetadata.getDataType(), JobMetadata.getExportService());
     ExportResult<?> exportResult;
@@ -135,11 +147,13 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
               () -> jobIdPrefix + "Starting import, copy iteration: " + copyIteration,
               EventCode.COPIER_STARTED_IMPORT);
       CallableImporter callableImporter =
+              // TODO: 2022/2/16 导入数据入口执行器，提供者provider导出数据
               new CallableImporter(
                       importerProvider,
                       jobId,
                       idempotentImportExecutor,
                       importAuthData,
+                      // DataModel 具体数据
                       exportResult.getExportedData(),
                       metricRecorder);
       RetryingCallable<ImportResult> retryingImporter =
@@ -148,10 +162,12 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       boolean importSuccess = false;
       Stopwatch importStopwatch = Stopwatch.createStarted();
       try {
+        // 执行导入数据的call方法
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
         if (importSuccess) {
           try {
+            // 记录导入成功的数量和大小
             jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
             jobStore.addBytes(jobId, importResult.getBytes().orElse(null));
           } catch (IOException e) {

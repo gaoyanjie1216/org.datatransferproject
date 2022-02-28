@@ -22,14 +22,15 @@ import java.util.UUID;
 
 /**
  * A class that contains metadata for a transfer worker's job.
- *
  * <p>
- *
  * <p>This class is completely static to ensure it is a singleton within each transfer worker
  * instance.
+ * 包含传输worker的元数据的类。
+ * 这个类是完全静态的，以确保它在每个传输worker中是一个单例实例。
  */
 @SuppressWarnings("WeakerAccess")
 // We make the class and various methods public so they can be accessed from Monitors
+// 我们将类和各种方法变成公共的，这样就可以从监视器中访问它们
 public final class JobMetadata {
   private static byte[] encodedPrivateKey = null;
   private static UUID jobId = null;

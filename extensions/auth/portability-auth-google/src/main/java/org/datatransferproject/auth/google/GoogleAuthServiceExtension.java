@@ -20,6 +20,8 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
 /**
  * An {@link AuthServiceExtension} providing an authentication mechanism for Google services.
+ *
+ * 一个为谷歌服务提供认证机制的{@link AuthServiceExtension}。
  */
 public class GoogleAuthServiceExtension extends OAuth2ServiceExtension {
 

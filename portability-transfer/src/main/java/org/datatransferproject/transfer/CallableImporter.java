@@ -64,8 +64,8 @@ public class CallableImporter implements Callable<ImportResult> {
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
       idempotentImportExecutor.resetRecentErrors();
-      ImportResult result = importerProvider.get()
-          .importItem(jobId, idempotentImportExecutor, authData, data);
+      // TODO: 2022/2/16 importItem 导入数据的入口，提供者导出数据，这里是接收者具体的导入数据
+      ImportResult result = importerProvider.get().importItem(jobId, idempotentImportExecutor, authData, data);
 
       Collection<ErrorDetail> errors = idempotentImportExecutor.getRecentErrors();
       success = result.getType() == ImportResult.ResultType.OK && errors.isEmpty();

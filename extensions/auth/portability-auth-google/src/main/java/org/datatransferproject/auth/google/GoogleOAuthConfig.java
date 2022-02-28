@@ -24,6 +24,8 @@ import org.datatransferproject.auth.OAuth2Config;
 
 /**
  * Class that supplies Google-specific OAuth2 info
+ * 密钥和身份验证
+ * Google 使用 OAuth2 进行授权
  */
 public class GoogleOAuthConfig implements OAuth2Config {
 
@@ -62,7 +64,10 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .build();
   }
 
-  // See https://developers.google.com/identity/protocols/googlescopes
+  /**
+   * See https://developers.google.com/identity/protocols/googlescopes
+   * 谷歌授权，针对不同的类型
+   */
   @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()

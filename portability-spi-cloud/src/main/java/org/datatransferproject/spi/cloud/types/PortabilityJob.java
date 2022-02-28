@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 @AutoValue
 @JsonDeserialize(builder = PortabilityJob.Builder.class)
 public abstract class PortabilityJob {
+  // authorization_state 批准、授权状态
   public static final String AUTHORIZATION_STATE = "AUTHORIZATION_STATE";
   // Keys for specific values in the key value store
   private static final String DATA_TYPE_KEY = "DATA_TYPE";
@@ -105,8 +106,7 @@ public abstract class PortabilityJob {
         .setFailureReason(failureReason)
         .setJobAuthorization(
             JobAuthorization.builder()
-                .setState(
-                    JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
+                .setState(JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
                 .setEncryptionScheme((String) properties.get(ENCRYPTION_SCHEME))
                 .setEncryptedAuthData(encryptedAuthData)
                 .setInstanceId(instanceId)

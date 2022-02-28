@@ -52,7 +52,9 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
-/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
+/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
+ *  基于谷歌云平台的数据存储实现
+ * */
 @Singleton
 public final class GoogleJobStore extends JobStoreWithValidator {
 
@@ -122,6 +124,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    *     problem inserting the job.
+   * 创建谷歌云存储的执行任务
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -160,6 +163,13 @@ public final class GoogleJobStore extends JobStoreWithValidator {
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    *     updating it @throws IllegalStateException if validator.validate() failed
+   * 更新谷歌云存储任务
+   *
+   * 验证{@code jobId}的{@code PortabilityJob}已经存在，并更新到
+   * {@code job}，在一个{@code Transaction}中。如果{@code validator}是非空的，
+   * validate()在事务中首先被调用。
+   * @throws IOException 如果一个job在{@code jobId}中不存在或者存在问题
+   * 如果validator.validate()失败，@抛出IllegalStateException
    */
   @Override
   protected void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)

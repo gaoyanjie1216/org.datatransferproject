@@ -201,6 +201,15 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
     return vCard.getStructuredNames().size() >= 1 && vCard.getStructuredName() != null;
   }
 
+  /**
+   * 导入谷歌联系人信息
+   * @param jobId the ID for the job
+   * @param idempotentExecutor an executor to wrap any import calls in
+   * @param authData authentication information
+   * @param data the data
+   * @return
+   * @throws Exception
+   */
   @Override
   public ImportResult importItem(UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
@@ -211,6 +220,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
       List<VCard> vCardList = reader.readAll();
       PeopleService.People peopleService = getOrCreatePeopleService(authData).people();
       for (VCard vCard : vCardList) {
+        // 转换成谷歌信息的人员信息类
         Person person = convert(vCard);
         idempotentExecutor.executeAndSwallowIOExceptions(
             vCard.toString(),
@@ -227,6 +237,11 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
     return peopleService == null ? makePeopleService(authData) : peopleService;
   }
 
+  /**
+   * 获取谷歌makePeopleService，用于联系人的信息的导入
+   * @param authData
+   * @return
+   */
   private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new PeopleService.Builder(

@@ -104,6 +104,7 @@ public class KoofrPhotosImporter
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           photoModel.getAlbumId() + "-" + photoModel.getDataId(),
           photoModel.getTitle(),
+          // 导入图片
           () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
@@ -143,6 +144,7 @@ public class KoofrPhotosImporter
         inputStream =
             new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
       } else if (photo.getFetchableUrl() != null) {
+        // 根据url获取相应的InputStream流文件
         HttpURLConnection conn = imageStreamProvider.getConnection(photo.getFetchableUrl());
         inputStream = new BufferedInputStream(conn.getInputStream());
       } else {
