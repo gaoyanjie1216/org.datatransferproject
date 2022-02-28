@@ -268,6 +268,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
           // 上传图片流到云服务上
           String uploadToken = googlePhotosInterface.uploadPhotoContent(s);
           // final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
+          // 上传的标题是图片的描述部分
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
           uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
@@ -307,7 +308,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
       // 获取或创建谷歌图片类GooglePhotosInterface
       // 发送请求创建 createPhotos
       GooglePhotosInterface googlePhotosInterface = getOrCreatePhotosInterface(jobId, authData);
-      // todo 创建图片
+
+      // TODO: 2022/2/28 创建图片 请求url：https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate
       BatchMediaItemResponse photoCreationResponse = googlePhotosInterface.createPhotos(uploadItem);
       System.out.println("createPhotos result: " + photoCreationResponse);
       Preconditions.checkNotNull(photoCreationResponse);
@@ -390,22 +392,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
       return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
     }
     // TODO: 2022/2/16 根据url获取相应的InputStream流信息
-    // HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-    //return Pair.of(conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
-    // String inputUrl = fetchableUrl;
-    URL url = new URL(fetchableUrl);
-    if("https".equalsIgnoreCase(url.getProtocol())) {
-      try {
-        SslUtils.ignoreSsl();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod("GET");
-    connection.setConnectTimeout(10 * 1000);
-    connection.connect();
-    return Pair.of(connection.getInputStream(), connection.getContentLengthLong() != -1 ? connection.getContentLengthLong() : 0);
+     HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
+    return Pair.of(conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
   }
 
   String getIdempotentId(PhotoModel photo) {

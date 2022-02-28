@@ -18,6 +18,8 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+
 /**
  * Response returned by a search for GoogleMediaItems
  */
@@ -32,5 +34,13 @@ public class MediaItemSearchResponse {
 
   public String getNextPageToken() {
     return nextPageToken;
+  }
+
+  @Override
+  public String toString() {
+    return "MediaItemSearchResponse{" +
+            "mediaItems=" + Arrays.toString(mediaItems) +
+            ", nextPageToken='" + nextPageToken + '\'' +
+            '}';
   }
 }

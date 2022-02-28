@@ -70,4 +70,17 @@ public class GoogleMediaItem {
   public void setFilename(String filename) { this.filename = filename; }
 
   public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+
+  @Override
+  public String toString() {
+    return "GoogleMediaItem{" +
+            "id='" + id + '\'' +
+            ", description='" + description + '\'' +
+            ", baseUrl='" + baseUrl + '\'' +
+            ", mimeType='" + mimeType + '\'' +
+            ", mediaMetadata=" + mediaMetadata +
+            ", filename='" + filename + '\'' +
+            ", productUrl='" + productUrl + '\'' +
+            '}';
+  }
 }

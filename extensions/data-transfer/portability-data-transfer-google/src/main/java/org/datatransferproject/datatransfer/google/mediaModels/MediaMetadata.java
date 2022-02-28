@@ -42,4 +42,12 @@ public class MediaMetadata {
   public void setVideo(Video video) {
     this.video = video;
   }
+
+  @Override
+  public String toString() {
+    return "MediaMetadata{" +
+            "photo=" + photo +
+            ", video=" + video +
+            '}';
+  }
 }

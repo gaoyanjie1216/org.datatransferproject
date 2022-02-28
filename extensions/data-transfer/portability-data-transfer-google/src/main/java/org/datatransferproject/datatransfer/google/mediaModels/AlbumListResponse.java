@@ -18,6 +18,8 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+
 /**
  * The response provided by the Google Photos API for an album query
  */
@@ -34,5 +36,13 @@ public class AlbumListResponse {
 
   public String getNextPageToken() {
     return nextPageToken;
+  }
+
+  @Override
+  public String toString() {
+    return "AlbumListResponse{" +
+            "albums=" + Arrays.toString(albums) +
+            ", nextPageToken='" + nextPageToken + '\'' +
+            '}';
   }
 }

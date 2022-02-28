@@ -40,4 +40,14 @@ public class Video {
     READY,
     FAILED;
   }
+
+  @Override
+  public String toString() {
+    return "Video{" +
+            "cameraMake='" + cameraMake + '\'' +
+            ", cameraModel='" + cameraModel + '\'' +
+            ", fps=" + fps +
+            ", status=" + status +
+            '}';
+  }
 }

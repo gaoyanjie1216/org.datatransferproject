@@ -289,7 +289,8 @@ public class GooglePhotosExporter
           do {
             containedMediaSearchResponse =
                 getOrCreatePhotosInterface(authData)
-                    .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+                        // 根据某一个相册id获取相册下的
+                        .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
             if (containedMediaSearchResponse.getMediaItems() != null) {
               for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
                 tempPhotosData.addContainedPhotoId(mediaItem.getId());

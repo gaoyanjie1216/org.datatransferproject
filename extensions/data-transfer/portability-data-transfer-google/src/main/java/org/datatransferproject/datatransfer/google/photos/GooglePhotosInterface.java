@@ -101,6 +101,11 @@ public class GooglePhotosInterface {
     writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
+  /**
+   * 获取谷歌相册列表
+   * @param pageToken
+   * @return
+   */
   AlbumListResponse listAlbums(Optional<String> pageToken)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
@@ -122,6 +127,12 @@ public class GooglePhotosInterface {
             .class);
   }
 
+  /**
+   * 获取谷歌相册图片列表数据，带分页
+   * @param albumId
+   * @param pageToken
+   * @return
+   */
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> params = new LinkedHashMap<>();
@@ -156,6 +167,11 @@ public class GooglePhotosInterface {
     return googleAlbum1;
   }
 
+  /**
+   * 上传图片真实流数据
+   * @param inputStream
+   * @return
+   */
   String uploadPhotoContent(InputStream inputStream)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     // TODO: add filename
@@ -168,7 +184,7 @@ public class GooglePhotosInterface {
       return "EMPTY_PHOTO";
     }
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
-    // 上传数据流到谷歌云存储 https://photoslibrary.googleapis.com/v1/uploads﻿
+    // 上传数据流到谷歌云存储 https://photoslibrary.googleapis.com/v1/uploads
     String s = makePostRequest(
             BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
     System.out.println("upload result: " + s);
@@ -179,9 +195,6 @@ public class GooglePhotosInterface {
    * 批量创建图片
    * @param newMediaItemUpload
    * @return
-   * @throws IOException
-   * @throws InvalidTokenException
-   * @throws PermissionDeniedException
    */
   BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
           throws IOException, InvalidTokenException, PermissionDeniedException {
@@ -211,6 +224,7 @@ public class GooglePhotosInterface {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
       response =
+              // TODO: 2022/2/28 过期后会刷新token
               handleHttpResponseException(
                       () ->
                               requestFactory.buildGetRequest(
@@ -236,7 +250,7 @@ public class GooglePhotosInterface {
           throws IOException, InvalidTokenException, PermissionDeniedException {
     // Wait for write permit before making request
     // 限流
-    //writeRateLimiter.acquire();
+    writeRateLimiter.acquire();
     // 创建httpClient
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     String encoderUrl = url + "?" + generateParamsString(parameters);
