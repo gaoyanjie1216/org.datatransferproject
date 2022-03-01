@@ -128,11 +128,10 @@ public class GooglePhotosImporterTest {
     responseAlbum.setId("111");
     // Run test
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
-    //TokensAndUrlAuthData authData = generateAuthData();
-    String accessToken = ACCESS_TOKEN;
-    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
-    String url = "https://accounts.google.com/o/oauth2/token";
-    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url);
+
+    // 获取访问权限认证
+    TokensAndUrlAuthData authData = generateAuthData();
+
     String albumId = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
     System.out.println("albumId: " + albumId);
 
@@ -172,11 +171,8 @@ public class GooglePhotosImporterTest {
   @Test
   public void getAlbumsAndPhotos() throws Exception {
     // Run test
-    //TokensAndUrlAuthData authData = generateAuthData();
-    String accessToken = ACCESS_TOKEN;
-    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
-    String url = "https://accounts.google.com/o/oauth2/token";
-    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url);
+    // 获取访问权限认证
+    TokensAndUrlAuthData authData = generateAuthData();
 
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
     GooglePhotosInterface googlePhotosInterface = googlePhotosImporter.getOrCreatePhotosInterface(uuid, authData);
@@ -307,10 +303,8 @@ public class GooglePhotosImporterTest {
     PhotoModel photoModel5 =
             new PhotoModel("图片5标题", url5, "图片5介绍", "png", "oldPhotoID5", albumId, false);
 
-    String accessToken = ACCESS_TOKEN;
-    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
-    String url111 = "https://accounts.google.com/o/oauth2/token";
-    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url111);
+    // 获取访问权限认证
+    TokensAndUrlAuthData authData = generateAuthData();
 
     // 初始化设置组件参数
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
