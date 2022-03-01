@@ -146,14 +146,13 @@ public class GooglePhotosImporterTest {
 
     // Run test
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
-    //TokensAndUrlAuthData authData = generateAuthData();
-    String accessToken = ACCESS_TOKEN;
-    String refreshToken = "1//0eF-vVrAwFQPyCgYIARAAGA4SNwF-L9Ir9w3MoQEdAzq7bleB-yzdjajxZtgJb5AhnoT-B46Ki5V5QekTRn58HtHDfS1u6VP6Ax8";
-    String url = "https://accounts.google.com/o/oauth2/token";
-    TokensAndUrlAuthData authData = new TokensAndUrlAuthData(accessToken, refreshToken, url);
+
+    // 获取访问权限认证
+    TokensAndUrlAuthData authData = generateAuthData();
 
     GooglePhotosInterface googlePhotosInterface = googlePhotosImporter.getOrCreatePhotosInterface(uuid, authData);
     String pageToken = null;
+    // 获取全部相册列表
     AlbumListResponse albumListResponse = googlePhotosInterface.listAlbums(Optional.ofNullable(pageToken));
 
     // [GoogleAlbum{id='AJ4dpApHhYqtnAg9DgwApe0PsBERXAB95bMH9fYzdkXnoxjO4pmnGR5n8EZkaMz9fboaiSwb134t', title='666'},
@@ -229,9 +228,9 @@ public class GooglePhotosImporterTest {
   public TokensAndUrlAuthData generateAuthData() {
     HttpTransport httpTransport = new NetHttpTransport();
     Map<String, String> params = new LinkedHashMap<>();
-    String clientId = "757188424449-sleac6qmnlnm56v5fgnmclu6512gl0hc.apps.googleusercontent.com";
-    String clientSecret = "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";
-    String authCode = "4/0AX4XfWhJL-GXHA1_Xq4vk9oww__Md3--xbe7sCN49ItYky859PHDINlRe7tnAnQthZyvWw";
+    String clientId = "860460009584-98n9i1bl02917coho35puev4njrjmqde.apps.googleusercontent.com";
+    String clientSecret = "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";
+    String authCode = "4/0AX4XfWgepAKcZrh1W6hzAPRIpnRlifRUxcfgUf_dv-zgToYoKJ2ZuhBWDEeX6qrEmgFzmQ";
     String callbackBaseUrl = "https://localhost:8080";
     params.put("client_id", clientId);
     params.put("client_secret", clientSecret);
@@ -240,22 +239,25 @@ public class GooglePhotosImporterTest {
     params.put("code", authCode);
 
     HttpContent content = new UrlEncodedContent(params);
-    String tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+    // 事实证明下面两个url链接都可以获取到access_token，开源项目中采用的第一个，网站中是第二个
+     String tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+    // String tokenUrl = "https://accounts.google.com/o/oauth2/token";
     try {
       String tokenResponse = makeRawPostRequest(httpTransport, tokenUrl, content);
-      TokensAndUrlAuthData responseClass = getResponseClass(tokenResponse);
-      return responseClass;
+      TokensAndUrlAuthData responseAuthData = getResponseClass(tokenResponse, tokenUrl);
+      System.out.println("responseAuthData: " + responseAuthData);
+      return responseAuthData;
     } catch (IOException e) {
       throw new RuntimeException("Error getting token", e);
     }
   }
 
-  public TokensAndUrlAuthData getResponseClass(String result) throws IOException {
+  public TokensAndUrlAuthData getResponseClass(String result, String tokenUrl) throws IOException {
     OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
     return new TokensAndUrlAuthData(
             response.getAccessToken(),
             response.getRefreshToken(),
-            "");
+            tokenUrl);
   }
 
   static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent)

@@ -39,6 +39,8 @@ public class GoogleCredentialFactory {
 
   // TODO: Determine correct duration in production
   private static final long EXPIRE_TIME_IN_SECONDS = 0L;
+  private static final String REFRESH_TOKEN = "refresh_token";
+  private static final String INVALID_GRANT = "invalid_grant";
 
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
@@ -94,24 +96,24 @@ public class GoogleCredentialFactory {
         .setExpiresInSeconds(EXPIRE_TIME_IN_SECONDS);
   }
 
-  /** Refreshes and updates the given credential */
-  public Credential refreshCredential(Credential credential)
-      throws IOException, InvalidTokenException {
+  /**
+   * Refreshes and updates the given credential
+   * 401 Unauthorized错误，需要刷新token，重新获取校验
+   */
+  public Credential refreshCredential(Credential credential) throws IOException, InvalidTokenException {
     try {
       TokenResponse tokenResponse =
           new RefreshTokenRequest(
-                  httpTransport,
-                  jsonFactory,
-                  new GenericUrl(credential.getTokenServerEncodedUrl()),
-                  credential.getRefreshToken())
+                  httpTransport, jsonFactory,
+                  new GenericUrl(credential.getTokenServerEncodedUrl()), credential.getRefreshToken())
+              .setGrantType(REFRESH_TOKEN)
               .setClientAuthentication(credential.getClientAuthentication())
               .setRequestInitializer(credential.getRequestInitializer())
               .execute();
-
       return credential.setFromTokenResponse(tokenResponse);
     } catch (TokenResponseException e) {
       TokenErrorResponse details = e.getDetails();
-      if (details != null && details.getError().equals("invalid_grant")) {
+      if (details != null && INVALID_GRANT.equals(details.getError())) {
         throw new InvalidTokenException("Unable to refresh token.", e);
       } else {
         throw e;
