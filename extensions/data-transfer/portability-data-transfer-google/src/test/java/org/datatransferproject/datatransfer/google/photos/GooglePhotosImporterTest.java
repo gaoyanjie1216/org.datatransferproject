@@ -15,6 +15,11 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
+import com.google.api.client.util.ArrayMap;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.google.common.io.BaseEncoding;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
@@ -41,10 +46,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
@@ -79,7 +86,7 @@ public class GooglePhotosImporterTest {
   private static final String OLD_ALBUM_ID = "OLD_ALBUM_ID";
   private static final String NEW_ALBUM_ID = "NEW_ALBUM_ID";
   private String PHOTO_TITLE = "Model photo title";
-  private String PHOTO_DESCRIPTION = "Model photo description";
+  private String PHOTO_DESCRIPTION = "Model photo description11111";
   private String IMG_URI = "image uri";
   private String JPEG_MEDIA_TYPE = "image/jpeg";
   private UUID uuid = UUID.randomUUID();
@@ -89,8 +96,11 @@ public class GooglePhotosImporterTest {
   private ImageStreamProvider imageStreamProvider;
   private Monitor monitor;
 
-  private String ACCESS_TOKEN
-          = "ya29.A0ARrdaM_QnvasKXhDXurh3xMcoeDkjxq6Vwobnlu9rrCRTg5KFH3udRLj6msaQhcT1CqwRTd0kTTE5pxnkBggkj0UkQmWQZIxCTQvAS8OMqa2cdTOpHmpmx8KOE7GtnpREbTBSNZIFH77rVT_Ntf13y7z54Op";
+  private static final String CLIENT_ID = "860460009584-98n9i1bl02917coho35puev4njrjmqde.apps.googleusercontent.com";
+  private static final String CLIENT_SECRET = "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";
+
+  private static final String REFRESH_TOKEN = "1//0eTnee7Jzqd0UCgYIARAAGA4SNwF-L9Ir4OZ4aiVZ-M0-W9raawhkQCn7r_2Ln4CtqRQa0rbNkQwkLimORYDXNE8JfVPWKw3VYnU";
+
   @Before
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
 
@@ -124,13 +134,17 @@ public class GooglePhotosImporterTest {
     String albumDescription = "Album description";
     PhotoAlbum albumModel = new PhotoAlbum("222", albumName, albumDescription);
 
-    GoogleAlbum responseAlbum = new GoogleAlbum();
-    responseAlbum.setId("111");
     // Run test
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
 
     // 获取访问权限认证
-    TokensAndUrlAuthData authData = generateAuthData();
+    TokensAndUrlAuthData authData;
+    try {
+      authData = generateAuthData();
+    } catch (Exception e) {
+      // 失败重新执行发送请求
+      authData = getTokensAndUrlAuthData();
+    }
 
     String albumId = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
     System.out.println("albumId: " + albumId);
@@ -146,8 +160,14 @@ public class GooglePhotosImporterTest {
     // Run test
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
 
-    // 获取访问权限认证
-    TokensAndUrlAuthData authData = generateAuthData();
+    // 获取访问权限认证，貌似只有在第一次请求的成功的时候才会有刷新token生成，所以需要保存下来
+    TokensAndUrlAuthData authData;
+    try {
+      authData = generateAuthData();
+    } catch (Exception e) {
+      // 失败刷新token
+      authData = getTokensAndUrlAuthData();
+    }
 
     GooglePhotosInterface googlePhotosInterface = googlePhotosImporter.getOrCreatePhotosInterface(uuid, authData);
     String pageToken = null;
@@ -168,11 +188,41 @@ public class GooglePhotosImporterTest {
     System.out.println("mediaItemSearchResponse " + mediaItemSearchResponse);
   }
 
+  /**
+   * 刷新token重新获取
+   * @return
+   * @throws IOException
+   */
+  private TokensAndUrlAuthData getTokensAndUrlAuthData() throws IOException {
+    TokensAndUrlAuthData authData;
+    HttpTransport httpTransport = new NetHttpTransport();
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("client_id", CLIENT_ID);
+    params.put("client_secret", CLIENT_SECRET);
+    params.put("grant_type", "refresh_token");
+    params.put("refresh_token", REFRESH_TOKEN);
+
+    HttpContent content = new UrlEncodedContent(params);
+    // 事实证明下面两个url链接都可以获取到access_token，开源项目中采用的第一个，网站中是第二个
+    String tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+    String tokenResponse = makeRawPostRequest(httpTransport, tokenUrl, content);
+    RefreshTokenResponse response = new ObjectMapper().readValue(tokenResponse, RefreshTokenResponse.class);
+    System.out.println("response: " + response);
+    authData = new TokensAndUrlAuthData(response.getAccessToken(), null, tokenUrl);
+    return authData;
+  }
+
   @Test
   public void getAlbumsAndPhotos() throws Exception {
     // Run test
     // 获取访问权限认证
-    TokensAndUrlAuthData authData = generateAuthData();
+    TokensAndUrlAuthData authData;
+    try {
+      authData = generateAuthData();
+    } catch (Exception e) {
+      // 失败刷新token
+      authData = getTokensAndUrlAuthData();
+    }
 
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
     GooglePhotosInterface googlePhotosInterface = googlePhotosImporter.getOrCreatePhotosInterface(uuid, authData);
@@ -224,12 +274,10 @@ public class GooglePhotosImporterTest {
   public TokensAndUrlAuthData generateAuthData() {
     HttpTransport httpTransport = new NetHttpTransport();
     Map<String, String> params = new LinkedHashMap<>();
-    String clientId = "860460009584-98n9i1bl02917coho35puev4njrjmqde.apps.googleusercontent.com";
-    String clientSecret = "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";
-    String authCode = "4/0AX4XfWgepAKcZrh1W6hzAPRIpnRlifRUxcfgUf_dv-zgToYoKJ2ZuhBWDEeX6qrEmgFzmQ";
+    String authCode = "4/0AX4XfWhay7IpHl05gZtSr1dp8Nl1qiwMipT_nLNIAYVKC_k-HZKCigrcxI3iioV5Gfqyqw";
     String callbackBaseUrl = "https://localhost:8080";
-    params.put("client_id", clientId);
-    params.put("client_secret", clientSecret);
+    params.put("client_id", CLIENT_ID);
+    params.put("client_secret", CLIENT_SECRET);
     params.put("grant_type", "authorization_code");
     params.put("redirect_uri", callbackBaseUrl);
     params.put("code", authCode);
@@ -248,6 +296,73 @@ public class GooglePhotosImporterTest {
     }
   }
 
+  /**
+   * post请求让你重定向
+   * @param callbackBaseUrl
+   * @param id
+   */
+  public void generateConfiguration(String callbackBaseUrl, String id) throws IOException {
+    String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(UTF_8));
+    HttpTransport httpTransport = new NetHttpTransport();
+    Set<String> scopes = Sets.newHashSet();
+    scopes.add("https://www.googleapis.com/auth/photoslibrary.appendonly");
+    scopes.add("https://www.googleapis.com/auth/photoslibrary.readonly");
+    String scope = String.join(" ", scopes);
+    // https://accounts.google.com/o/oauth2/auth authUrl也就是获取code的关键环节
+    String authUrl = "https://accounts.google.com/o/oauth2/auth";
+
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("response_type", "code");
+    params.put("client_id", CLIENT_ID);
+    params.put("scope", scope);
+    params.put("redirect_uri", callbackBaseUrl);
+
+ /*   HttpContent content = new UrlEncodedContent(params);
+    // 事实证明下面两个url链接都可以获取到access_token，开源项目中采用的第一个，网站中是第二个
+    String tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+    // String tokenUrl = "https://accounts.google.com/o/oauth2/token";
+
+    String tokenResponse = makeRawPostRequest(httpTransport, authUrl, content);
+    System.out.println("tokenResponse: " + tokenResponse);*/
+
+    // makeGetRequest(authUrl, params);
+  }
+
+  private void makeGetRequest(String url, Map<String, String> parameters)
+          throws IOException {
+    HttpTransport httpTransport = new NetHttpTransport();
+    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+    HttpRequest getRequest =
+            requestFactory.buildGetRequest(
+                    new GenericUrl(url + "?" + generateParamsString(parameters)));
+    // 封装返回结果
+    HttpResponse response = getRequest.execute();
+    Preconditions.checkState(response.getStatusCode() == 200);
+    String result = CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    System.out.println("result: " + result);
+  }
+
+  private String generateParamsString(Map<String, String> params) {
+    Map<String, String> updatedParams = new ArrayMap<>();
+    List<String> orderedKeys = new ArrayList<>(updatedParams.keySet());
+    Collections.sort(orderedKeys);
+    List<String> paramStrings = new ArrayList<>();
+    for (String key : orderedKeys) {
+      String k = key.trim();
+      String v = updatedParams.get(key).trim();
+      paramStrings.add(k + "=" + v);
+    }
+    return String.join("&", paramStrings);
+  }
+
+
+  @Test
+  public void getAuthCode() throws Exception {
+    String callBackUrl = "https://localhost:8080";
+    String id = "666";
+    generateConfiguration(callBackUrl, id);
+  }
+
   public TokensAndUrlAuthData getResponseClass(String result, String tokenUrl) throws IOException {
     OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
     return new TokensAndUrlAuthData(
@@ -263,8 +378,7 @@ public class GooglePhotosImporterTest {
     HttpResponse response = postRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
-      throw new IOException(
-              "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+      throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
     return CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
   }
@@ -286,11 +400,16 @@ public class GooglePhotosImporterTest {
     // test111相册id
     albumId = "AJ4dpAq1Z5DsR3IktTdJiGKreVoGBWpGcBZy5QwmLc9yEK1Cm-7YUcGxrtwLpg43tXEkkHkmf-xk";
 
+    // Album Name
+    albumId = "AJ4dpAqoItNnMQyKp6fxbiMv_QLZ02igqRzj2drJO33ods7jYqUcXQXgUPNwyqIDRR0FX8rF5_jN";
+
     String url1 = "https://eu.xmssdn.micloud.mi.com/2/1527852807128/get_thumbnail?sig=bGbZHW-Cj8z7JmBDZDe4kcLj4zA&data=eRt7jaQNQROaIbAwwPAzMO_YDvE03hHMKXKi0eZ8MY-fev0SDd6xW5EBrI65-KrG7wtT9C3v5J-PiTV8ufvRelzVAvS-sLCWPXnE2OcZzp_HayLtovewT_ZN034AZnCj7-VRQH42iYR3NP22hjeod2DA6pSLAFwT6KmYYVuqYUndi7pUJExct5n-DI50iSg9Z9pZ4seeI3MHBNMGje2kha3-XjzbMQuQCLnxrYpUG0wWQ5GbMobInlRnuWTWolXDdCNEy_LKw2AbdnGyQAtXU8Kkdkdv0OTLU5g8oSDyN6l2QzV-aHFwqsVT4Sk4mB_BGoOuUVtGr-vR3e6t12wzeg&ts=1646125385141&w=1080&h=1080&r=0&_cachekey=749625df2a74274537a22e376a484de3";
     String url2 = "http://10.38.162.140/2/1608633173353/get_thumbnail?sig=VLDBIv0piSaV4KnZRYIIcJQ1jlw&data=7a9__1Bhm0qj0dt7da32W5Vj8MtBnYypTVtROy1Zu4Dj6ea_j7uW1bGcpw7cqDlhmeYi8TNjHk0Fwl4aiIUIDjElYE5c6JXqCTvAe8_untnqk-KH_TRZEqGFLN849npH1nENIbKP7GUNSXASKyYsy74_lgq0NRfQqVibDlYxiBObNr9MX4EsqYVFFEwW6zbUbaP4mk0jsg3EoGQa3RcTj-9BAbsrHnE3FvbiVDBsaoKO4QXG_dI9tHMdCTvUAfKdhAIwya_sceK7T9vwT0lJ8fVPB4Gt6DqINI6Zi02HFHV4mIppudvlXQt-MTFTSGWA0jhPS97NRPCw&ts=1646619206672&w=1080&h=1080&r=0&_cachekey=b55215837e9dea27ae9fff7c000c6f1d";
     String url3 = "https://ali.xmssdn.micloud.mi.com/2/1566455553514/get_thumbnail?sig=zlEmx6zBSU8w_fj1IZIzmDyQiZo&data=Rz0-upesIl2e3JWIt4ZPfpVUHXJor5aYQS9w6tjdYbOO06EptrLQ6WO2vTha0umYIZzMaEtC6syuKrWoAq5wv0gKIDg_lBbS9x7TEC52kRTY7BsJn_nKRqDCggl7Wh0_GL6h8wMFRMrrCGJqsz5mwmEHp-ewFQxA7U7H0N-7cyK6hMVe8wINWQXgcqI40VzHO4IFZyExEbKui7ApnUsTaMngduXx6sI1VJFK9y96BD3fSAfqhI3vmRzf5_pkTBCHa0DdCOdM40Ye9s-YSsfb9stf7xgDbrVVryLrCtFnYH6wz4FcCQR7qkxLMlDxk2yCu3-5wkzmEcY&ts=1646107712139&w=1080&h=1080&r=0&_cachekey=a2a3a045f5bbf9a2adaa99f5aa7f9829";
     String url4 = "https://ali.xmssdn.micloud.mi.com/2/1566455553514/download_file?attachment=0&fn=eC5qcGc&ct=application%2Foctet-stream&meta=QzHg5R6p6Nl2-wQm6M33pt9w60wHY01ZMDWn709TYInjhZ8dvpxD5TYyEzY2HoLVnw7s3qKq-EJpMbWsFRVdXI2Z_xomdsi0plrNFNTbfWvE5PKbQdb0Eox2Eo14urpM56GWBq4-Pk3dvLCJoy07dPGm-d7_wROIoTKRE3LvKd7mg7XTBohYbqUhYb6w1EuozsbxaREWEbKJApJhjv1KRrGsaByKUMHvR4heasOf6TDu6atdr71lYibLDpQb3-SKi0rTqtU5eiAgHEr3n97WDPpe5yp-vLHKsFqpYbU84zCbQ51CieRUPGL85-30qZsGUvz0OB-erUSpSe25iz-dXG3N4cz8zHFtKxTGBYH4vpHIBsLcLPC8usLjOV0kx3QGKQ0T4fSWY-GzjuoWUGEu_CYNtINIrmKfygU&ts=1646022007000&sig=FxrD_R7rC9r0o7Px_eIiFwd4jwE&_cachekey=4896571904cc1d19392be592a05f9b6c";
     String url5 = "https://ali.xmssdn.micloud.mi.com/2/1566455553514/download_file?attachment=0&fn=eC5qcGc&ct=application%2Foctet-stream&meta=QzFqneoDjwcSW9oJubhkvBHlrozHj00_P4C78jIFJJP0-5opsvxU6ALJxJznlNnmMdDKeSyQ5KMfLr1rrkfzk0MpQ35W4snvzleoHTX13vPLs5CHMcLwAZFkS4II74YnRt--dix9LjseFwyIIfiaSDpQziY1rgzWyx8kVvcdvyZfto01N4CMLBCdLkVF_T4Ih75UeggGPumRgMJL7yVLIkBFc5GC6IG4Tfknjlh8gouGjcUu&ts=1646626241000&sig=cj0gl2auvGhe3PpjLfOxkD0BewM&_cachekey=7877a58a0641fabd53826c9b82a60b1a";
+    String url6 = "https://i.niupic.com/images/2022/03/02/9VyN.png";
+
 
     PhotoModel photoModel1 =
             new PhotoModel(PHOTO_TITLE, url1, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE, "oldPhotoID1", albumId, false);
@@ -302,9 +421,17 @@ public class GooglePhotosImporterTest {
             new PhotoModel(PHOTO_TITLE, url4, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE, "oldPhotoID4", albumId, false);
     PhotoModel photoModel5 =
             new PhotoModel("图片5标题", url5, "图片5介绍", "png", "oldPhotoID5", albumId, false);
+    PhotoModel photoModel6 =
+            new PhotoModel("图片6标题", url6, "图片6介绍", "png", "oldPhotoID6", albumId, false);
 
     // 获取访问权限认证
-    TokensAndUrlAuthData authData = generateAuthData();
+    TokensAndUrlAuthData authData;
+    try {
+      authData = generateAuthData();
+    } catch (Exception e) {
+      // 失败刷新token
+      authData = getTokensAndUrlAuthData();
+    }
 
     // 初始化设置组件参数
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
@@ -313,7 +440,7 @@ public class GooglePhotosImporterTest {
     long length =
         googlePhotosImporter.importPhotoBatch(
             UUID.randomUUID(), authData,
-            Lists.newArrayList(photoModel1),
+            Lists.newArrayList(photoModel6),
             executor, albumId);
     System.out.println("success length: " + length);
   }

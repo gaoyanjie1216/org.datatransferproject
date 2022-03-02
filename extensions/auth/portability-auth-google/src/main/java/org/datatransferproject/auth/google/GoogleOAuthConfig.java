@@ -34,7 +34,11 @@ public class GoogleOAuthConfig implements OAuth2Config {
     return "Google";
   }
 
-  // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
+  /**
+   * See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
+   * 获取访问code的链接
+   * @return
+   */
   @Override
   public String getAuthUrl() {
     return "https://accounts.google.com/o/oauth2/auth";

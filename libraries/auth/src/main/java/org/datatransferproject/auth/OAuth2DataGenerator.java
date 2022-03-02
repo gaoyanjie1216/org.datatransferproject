@@ -67,8 +67,10 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(UTF_8));
+    // 授权范围，可以访问哪些Api
     String scope = scopes.isEmpty() ? "" : String.join(" ", scopes);
     try {
+      // https://accounts.google.com/o/oauth2/auth authUrl也就是获取code的关键环节
       URIBuilder builder = new URIBuilder(config.getAuthUrl())
           .setParameter("response_type", "code")
           .setParameter("client_id", clientId)
@@ -119,6 +121,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         "Config is missing service name");
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
+    // "https://www.googleapis.com/oauth2/v4/token"
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
 
