@@ -45,6 +45,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
+import org.datatransferproject.datatransfer.google.mediaModels.SimpleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.Status;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -256,6 +257,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
     //  this however, seems to require knowledge of the total file size.
     // 断点续传https://developers.google.com/photos/library/guides/resumable-uploads
     // 断点续传将允许上传不适合内存的更大的媒体。要做这似乎需要知道总文件大小
+    SimpleMediaItem simpleMediaItem;
+    NewMediaItem newMediaItem;
     for (PhotoModel photo : photos) {
       try {
         Pair<InputStream, Long> inputStreamBytesPair =
@@ -268,8 +271,10 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
           // 上传图片流到云服务上
           String uploadToken = googlePhotosInterface.uploadPhotoContent(s);
           // final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
-          // 上传的标题是图片的描述部分
-          mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
+          // 上传的标题是图片的标题和描述部分
+          simpleMediaItem = new SimpleMediaItem(uploadToken, photo.getTitle());
+          newMediaItem = new NewMediaItem(cleanDescription(photo.getDescription()), simpleMediaItem);
+          mediaItems.add(newMediaItem);
           uploadTokenToDataId.put(uploadToken, photo);
           uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
         }

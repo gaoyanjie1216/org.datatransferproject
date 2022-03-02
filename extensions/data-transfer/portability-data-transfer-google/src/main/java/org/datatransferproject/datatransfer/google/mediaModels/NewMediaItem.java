@@ -29,9 +29,16 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
  * corresponding to the previously-uploaded content.
  */
 public class NewMediaItem {
+
+  /**
+   * 文件描述
+   */
   @JsonProperty("description")
   private String description;
 
+  /**
+   * 包括文件名称和文件流
+   */
   @JsonProperty("simpleMediaItem")
   private SimpleMediaItem simpleMediaItem;
 
@@ -54,4 +61,11 @@ public class NewMediaItem {
     return description;
   }
 
+  @Override
+  public String toString() {
+    return "NewMediaItem{" +
+            "description='" + description + '\'' +
+            ", simpleMediaItem=" + simpleMediaItem +
+            '}';
+  }
 }

@@ -23,14 +23,42 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class SimpleMediaItem {
 
+  /**
+   * 文件流
+   */
   @JsonProperty("uploadToken")
   private String uploadToken;
+
+  /**
+   * 文件名称
+   */
+  @JsonProperty("fileName")
+  private String fileName;
+
 
   SimpleMediaItem(String uploadToken) {
     this.uploadToken = uploadToken;
   }
 
+  public SimpleMediaItem(String uploadToken, String fileName) {
+    this.uploadToken = uploadToken;
+    this.fileName = fileName;
+  }
+
+
   public String getUploadToken() {
     return uploadToken;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  @Override
+  public String toString() {
+    return "SimpleMediaItem{" +
+            "uploadToken='" + uploadToken + '\'' +
+            ", fileName='" + fileName + '\'' +
+            '}';
   }
 }
