@@ -67,6 +67,8 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
    *
    * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
    * compromised, we can update them without restarting our servers.
+   *
+   * 放入缓存中，生成的key和secret，也对应客户端的clientId和clientSecret
    */
   private final LoadingCache<String, String> keys;
 

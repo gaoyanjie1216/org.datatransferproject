@@ -158,6 +158,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
       // (io.kubernetes.client.apis.CoreV1Api.listSecretForAllNamespaces)
     }
     try {
+      // 获取默认的谷歌客户端认证
       return GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {
       throw new GoogleCredentialException(

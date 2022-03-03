@@ -48,4 +48,13 @@ public class TokensAndUrlAuthData extends AuthData {
   public String getToken() {
     return getAccessToken();
   }
+
+  @Override
+  public String toString() {
+    return "TokensAndUrlAuthData{" +
+            "accessToken='" + accessToken + '\'' +
+            ", refreshToken='" + refreshToken + '\'' +
+            ", tokenServerEncodedUrl='" + tokenServerEncodedUrl + '\'' +
+            '}';
+  }
 }
