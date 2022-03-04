@@ -99,6 +99,7 @@ public class GenerateServiceAuthDataAction
 
       // TODO: Use UUID instead of UUID.toString()
       // Generate auth data
+      // 这里的authToken其实也就是重定向生成的code浏览器返回的参数
       AuthData authData =
           generator.generateAuthData(
               request.getCallbackUrl(),

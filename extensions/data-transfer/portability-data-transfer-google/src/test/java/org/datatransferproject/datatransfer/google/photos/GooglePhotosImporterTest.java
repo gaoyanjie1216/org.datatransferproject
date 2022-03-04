@@ -107,7 +107,7 @@ public class GooglePhotosImporterTest {
   JsonFactory JSON_FACTORY = new JacksonFactory();
 
   private static final String CALLBACK_BASEURL = "https://www.baidu.com";
-  private static final String AUTH_CODE = "4/0AX4XfWhcwDx9z2rV7KUMQgT0f73VtO962O8MFm8h7G3fVXeF3qT9MUz2VEt4eA6ArnOGSg";
+  private static final String AUTH_CODE = "4/0AX4XfWj93_FpFShTlCd5ydQIOxVPfNYTFGTWMmSDG-SSU_qU3ZusHHIhdrYhOTuonZm-fg";
 
   private static final String CLIENT_ID = "860460009584-mq15b1udn39dm1rs0liipa5qnjqf8cdp.apps.googleusercontent.com";
   private static final String CLIENT_SECRET = "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";
@@ -142,10 +142,11 @@ public class GooglePhotosImporterTest {
 
   @Test
   public void importAlbum() throws Exception {
-    // Set up
-    String albumName = "888";
+    // 相册的名称可以相同，但是id是不同的，即便指定了相册，生成相册后也会生成一个新的相册id
+    String albumName = "test222";
     String albumDescription = "Album description";
-    PhotoAlbum albumModel = new PhotoAlbum("222", albumName, albumDescription);
+    String albumId = "AJ4dpAq1Z5DsR3IktTdJiGKreVoGBWpGcBZy5QwmLc9yEK1Cm-7YUcGxrtwLpg43tXEkkHkmf-xk";
+    PhotoAlbum albumModel = new PhotoAlbum(albumId, albumName, albumDescription);
 
     // Run test
     GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
@@ -159,8 +160,8 @@ public class GooglePhotosImporterTest {
       authData = getTokensAndUrlAuthData();
     }
 
-    String albumId = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
-    System.out.println("albumId: " + albumId);
+    String albumId1 = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
+    System.out.println("albumId: " + albumId1);
 
     // test333的相册id
     // AJ4dpAo28yC4gM26PdE04psigG8mSyohBQRL2Ee_BdnykfT0oAZu-jnJDy8unXH6YHSR93L-kvtF
