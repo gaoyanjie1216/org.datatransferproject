@@ -169,7 +169,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
       title = title.substring(0, 497) + "...";
     }
     googleAlbum.setTitle(title);
-    googleAlbum.setId("1");
+    googleAlbum.setId(inputAlbum.getId());
 
     // getOrCreatePhotosInterface 获取或创建谷歌图片类
     // createAlbum 执行post请求

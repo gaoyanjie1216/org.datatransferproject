@@ -215,7 +215,8 @@ public class RecurrenceRule {
     }
 
     static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RRule.Builder();
+      // return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RRule.Builder();
+      return null;
     }
 
     abstract Freq freq();
@@ -291,7 +292,8 @@ public class RecurrenceRule {
     }
 
     static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RDate.Builder();
+      //return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RDate.Builder();
+      return null;
     }
 
     @Nullable
@@ -344,7 +346,8 @@ public class RecurrenceRule {
     }
 
     public static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_ExDate.Builder();
+      // return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_ExDate.Builder();
+      return null;
     }
 
     @Nullable

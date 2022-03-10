@@ -31,10 +31,10 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.CharStreams;
 import com.google.rpc.Code;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -77,16 +77,19 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 public class GooglePhotosImporterTest {
 
@@ -107,7 +110,7 @@ public class GooglePhotosImporterTest {
   JsonFactory JSON_FACTORY = new JacksonFactory();
 
   private static final String CALLBACK_BASEURL = "https://www.baidu.com";
-  private static final String AUTH_CODE = "4/0AX4XfWj93_FpFShTlCd5ydQIOxVPfNYTFGTWMmSDG-SSU_qU3ZusHHIhdrYhOTuonZm-fg";
+  private static final String AUTH_CODE = "4%2F0AX4XfWjS5mng9nYCinoQhvI7L19bPAUjbLadpZR6yamqCoDJU2up48lG4hKQhwtHl9BWoQ";
 
   private static final String CLIENT_ID = "860460009584-mq15b1udn39dm1rs0liipa5qnjqf8cdp.apps.googleusercontent.com";
   private static final String CLIENT_SECRET = "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";
@@ -166,6 +169,81 @@ public class GooglePhotosImporterTest {
     // test333的相册id
     // AJ4dpAo28yC4gM26PdE04psigG8mSyohBQRL2Ee_BdnykfT0oAZu-jnJDy8unXH6YHSR93L-kvtF
     // GoogleAlbum{id='AJ4dpApHhYqtnAg9DgwApe0PsBERXAB95bMH9fYzdkXnoxjO4pmnGR5n8EZkaMz9fboaiSwb134t', title='666'}
+  }
+
+  public String importAlbum2(String albumName, String albumId, String description, TokensAndUrlAuthData authData) throws Exception {
+    PhotoAlbum albumModel = new PhotoAlbum(albumId, albumName, description);
+    // Run test
+    GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
+
+    String albumId1 = googlePhotosImporter.importSingleAlbum(uuid, authData, albumModel);
+    System.out.println("albumId: " + albumId1);
+    return albumId1;
+  }
+
+  @Test
+  public void importAlbumsAndPhotos() throws Exception {
+
+    Map<PhotoAlbum, List<PhotoModel>> map = new HashMap<>();
+    String albumId = "16958318004338720";
+    PhotoAlbum photoAlbum = new PhotoAlbum(albumId, "相册名字333_0p1rkviwyoaizwwr86kpu3s4ep03ylks1640138580254", "");
+
+    String title1 = "文件名字_ylhw3v5vucn45y7l3ll6esw7ncoqdddr1640138580531.jpg";
+    String title2 = "文件名字_xd18ry3ovag25tcljc9s4s36dogzbkdq1640138580796.jpg";
+    String url1 = "http://10.38.162.140/2/1608633173353/download_file?attachment=0&fn=5paH5Lu25ZCN5a2XX3lsaHczdjV2dWNuNDV5N2wzbGw2ZXN3N25jb3FkZGRyMTY0MDEzODU4MDUzMS5qcGc&ct=application%2Foctet-stream&meta=6aOAjzdfqcTTHYJodsXo9sXI5PltvW9KX6sNtMJw7IcZTQk3Eq3l4tBw5TCu9ku4a6Slh4lFZnpw7Spi6x8m1g8ShpVuC3Aql2F16UnNIubHu6pIhkuqaYbeo_nSF-mmj5_chKD8dKLkMhnndgI4ihsA5QYMOYkR8CSDxEHqUB7NxA2cogiwT8y7RZOm7sCMtjFKnGs1sj1FR2lFCEz-a0thuTj9SjRNdQtcsPL-438sNVpwNz8nkOanYcpckXxukUnjDjBYEfyPiSH6V0sMzVh7udDR6rsXJ8nA4ScW92fvleMFos-T-3kEPTsy&ts=1647337576000&sig=D5XU5PZzbLz4LUBWeT7fOuUMNr4&_cachekey=dd8d700dd361f861a755e7a5ba091771";
+    String url2 = "http://10.38.162.140/2/1608633173353/download_file?attachment=0&fn=5paH5Lu25ZCN5a2XX3hkMThyeTNvdmFnMjV0Y2xqYzlzNHMzNmRvZ3pia2RxMTY0MDEzODU4MDc5Ni5qcGc&ct=application%2Foctet-stream&meta=6aO-8d9lF7cKd2HbNlFPO7o8Vz5S9G9qX6sNtMJw7IcZTQk3Eq3l4tBx7Wnht0S-cqenjo9Fay5wtCU3rk4mkg4Yip1lDX8qlGF16UnNIubHu6pKjEyqaYbeo_nSF9fYZ6Vi93mWlxGkpr4qCfaLTSRJ5QZ_pFplacVzs1diWFcUBCKboiiwT8y7SvCLxLWnl0EoqTA1sj2Qs1wi0vZqmBXnseJeFNqG6yzwbkL1Fd_jgc564NnJAuanlNDFDRrFL6h8Y_W9fpYTJiH6V0sMYUlVE2Z56cMhgS4_TjqQjWfvleMFos-T-3kEPTsy&ts=1647337576000&sig=mpow81-xJg_pE7HpQcEz9SFslHE&_cachekey=113bc297278448d106df0bd493290fd6";
+    String url3 = "http://10.38.162.140/2/1608633173353/download_file?attachment=0&fn=5paH5Lu25ZCN5a2XX3l3dDZwamRtMjQxc3YyMjE2enZtZmw3cTg3MDQzaXJwMTY0Njg3NDExMTM5My5qcGc&ct=application%2Foctet-stream&meta=6aMJJo3CjyQ95UMPRAyEWfCL4oBtXW9uz7IrbLJhj9gUHnwqeuXfKvZ-_W6pr1ngL-X3mstCLXwqpDBjuxZi0ABL1c4sBmY-1GZ360HLJe_DsqlEhlTuc5Ggpv3eVVazoai70tvFX_bOOSFGWxAmcUFp7e0b1k_YviW9m3DNEkdZuqgkWcw2UJPUTI6I1d-aqEB_q3BRx25EDbBFL1Ar7fYgnkssiHWhJTPFpwKvhKzt4uRILw_eYN4grlDL9B-7onvQLybdbX06sSKXw-KVQiTI6k8FLWBWy3IE888hunehP0Alos7PAdi2qwqmWzDFuFAgRadgm5efUhEAkh4&ts=1647415129000&sig=-dEq6AdE_zRqk6Fs_iHz2702FNU&_cachekey=9b0ddd782afe7787859bcb65c1fcaeac";
+
+    PhotoModel photoModel1 =
+            new PhotoModel(title1, url1, PHOTO_DESCRIPTION, "jpg", "16958318023999520", albumId, false);
+    PhotoModel photoModel2 =
+            new PhotoModel(title2, url2, PHOTO_DESCRIPTION, "jpg", "16958318004338720", albumId, false);
+
+    ArrayList<PhotoModel> photoModels = Lists.newArrayList(photoModel1, photoModel2);
+    map.put(photoAlbum, photoModels);
+
+    long result = 0L;
+    // 获取访问权限认证
+    TokensAndUrlAuthData authData;
+    try {
+      authData = generateAuthData();
+    } catch (Exception e) {
+      // 失败重新执行发送请求
+      authData = getTokensAndUrlAuthData();
+    }
+   /* authData = new TokensAndUrlAuthData("ya29.A0ARrdaM_b40rEa7qFiZZdQb1gdEtQXLDiTo0yKwUoaAx_dzCEeh34DheUYZDAYAoR3DhfmK7c5_7rFGBtXE10OlTIg-lCHcDo0cgHw_NRDyInuGN2_kRHYit6lQqPu3gZlfn_tZ4mN8CRGolCTv5G37t1Nw4_IA",
+            "", "https://www.googleapis.com/oauth2/v4/token");*/
+    for (Map.Entry<PhotoAlbum, List<PhotoModel>> entry : map.entrySet()) {
+      PhotoAlbum album = entry.getKey();
+      String newAlbumId = importAlbum2(album.getName(), albumId, "", authData);
+      if (StringUtils.isNotBlank(newAlbumId)) {
+        TokensAndUrlAuthData finalAuthData = authData;
+        long l1 = executeAndSwallowIOExceptions(newAlbumId, album.getName(),
+                () -> importTwoPhotos2(newAlbumId, entry.getValue(), finalAuthData));
+        result += l1;
+      }
+    }
+    System.out.println("result: " + result);
+  }
+
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+          String idempotentId, String itemName, Callable<T> callable) throws Exception {
+    try {
+      return executeOrThrowException(idempotentId, itemName, callable);
+    } catch (IOException e) {
+      // Note all errors are logged in executeOrThrowException so no need to re-log them here.
+      return null;
+    }
+  }
+
+  public <T extends Serializable> T executeOrThrowException(
+          String idempotentId, String itemName, Callable<T> callable) throws Exception {
+    try {
+      T result = callable.call();
+      return result;
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   @Test
@@ -297,7 +375,7 @@ public class GooglePhotosImporterTest {
     params.put("client_secret", CLIENT_SECRET);
     params.put("grant_type", "authorization_code");
     params.put("redirect_uri", CALLBACK_BASEURL);
-    params.put("code", AUTH_CODE);
+    params.put("code", AUTH_CODE.replace("%2F", "/"));
 
     HttpContent content = new UrlEncodedContent(params);
     // 事实证明下面两个url链接都可以获取到access_token，开源项目中采用的第一个，网站中是第二个
@@ -490,6 +568,27 @@ public class GooglePhotosImporterTest {
             Lists.newArrayList(photoModel6),
             executor, albumId);
     System.out.println("success length: " + length);
+  }
+
+  public long importTwoPhotos2(String albumId, List<PhotoModel> photoModelList, TokensAndUrlAuthData authData) throws Exception {
+
+    // 初始化设置组件参数
+    GooglePhotosImporter googlePhotosImporter = getGooglePhotosImporter();
+
+    // 代码中最大写的50个，然后用的49，到时候试试吧
+    // Iterators.partition(albumEntry.getValue().iterator(), 49);
+    // 谷歌默认是20000最大
+    // https://developers.google.cn/photos/library/reference/rest/v1/mediaItems/batchCreate#NewMediaItem
+    List<List<PhotoModel>> modelList = Lists.partition(photoModelList, 18000);
+    long result = 0L;
+    // 批量导入图片返回图片的字节数
+    for (List<PhotoModel> list : modelList) {
+      long length = googlePhotosImporter.importPhotoBatch(
+              UUID.randomUUID(), authData, list, executor, albumId);
+      result += length;
+    }
+    System.out.println("success result: " + result);
+    return result;
   }
 
   private NewMediaItemResult buildMediaItemResult(String uploadToken, int code) {

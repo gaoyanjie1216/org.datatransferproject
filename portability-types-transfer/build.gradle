@@ -19,6 +19,10 @@ plugins {
     id 'signing'
 }
 
+/*test {
+    useJUnitPlatform()
+}*/
+
 dependencies {
     
     compile project(':portability-api-launcher')
